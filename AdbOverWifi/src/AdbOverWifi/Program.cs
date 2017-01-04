@@ -17,7 +17,7 @@ namespace netcore_redis
         public static void Main(string[] args)
         {	
             int timeout = int.Parse(args[2]);
-            runADB("logcat -c", 1);	//this is done instantly
+            runADB("logcat -c", 0);	//this is done instantly
             runADB("connect " + args[0],1);
             //Thread threadInstall = new Thread(() => runADB("install " + args[1], 10));
             //threadInstall.Start();
@@ -43,7 +43,8 @@ namespace netcore_redis
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "adb",
+                    //FileName = "adb",
+                    FileName = @"D:\Minimal ADB and Fastboot\adb.exe",//koristi liniju iznad za linux
                     Arguments = arguments,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
