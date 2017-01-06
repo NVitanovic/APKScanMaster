@@ -44,7 +44,7 @@ namespace ADBLibrary
             }
         }
 
-        public static void connectToDevice(String ip)
+        public static void connectToDevice(String ip)   //TODO: add PORT, currently not using it
         {
             IPAddress tmp;
             if (IPAddress.TryParse(ip, out tmp))
@@ -63,7 +63,7 @@ namespace ADBLibrary
             clearLogcat();
             String logcat = null;
 
-            Process proc = runADB("logcat ActivityManager:I *:S", true);
+            Process proc = runADB("logcat ActivityManager:I *:S", true);    //silence all other except from Activitymanager
             //Process proc = runADB("logcat",true);
 
             logcat = proc.StandardOutput.ReadToEnd();

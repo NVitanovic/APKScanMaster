@@ -15,8 +15,7 @@ namespace main
             ADBLibrary.ADBClient.clearLogcat();
             ADBLibrary.ADBClient.logcatTimeout = 58;
 
-            Console.WriteLine("starting parsing");
-            String[] z = {
+            String[] logcatAntivirusKeyword = {
                 "virus",
                 "VirusScannerShieldDialogActivity", //AVAST
                 "pera",
@@ -25,10 +24,11 @@ namespace main
                 "com.bitdefender.antivirus/.NotifyUserMalware", //BIT DEFENDER
                 "org.malwarebytes.antimalware/.security.scanner.activity.alert.MalwareAppAlertActivity" //MALWAREBYTES
             };
-            Dictionary<String, bool> results = ADBLibrary.ADBClient.parseLogcat(z);
+
+            Dictionary<String, bool> results = ADBLibrary.ADBClient.parseLogcat(logcatAntivirusKeyword);
             for (int i = 0; i < results.Count; i++)
             {
-                Console.WriteLine(z[i] + ":" + results[z[i]]);
+                Console.WriteLine(logcatAntivirusKeyword[i] + "\t\tsays that file is a virus " + results[logcatAntivirusKeyword[i]]);
             }
             Console.WriteLine("END MAIN");
             Console.ReadLine();
