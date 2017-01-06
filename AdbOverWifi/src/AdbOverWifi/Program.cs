@@ -17,13 +17,13 @@ namespace netcore_redis
         public static void Main(string[] args)
         {	
             int timeout = int.Parse(args[2]);
-            ADBClient.runADB("logcat -c", 0);	//this is done instantly
-            ADBClient.runADB("connect " + args[0],1);
+            //ADBClient.runADB("logcat -c", 0);	//this is done instantly
+            //ADBClient.runADB("connect " + args[0],1);
             ADBClient.getDevices();
             //Thread threadInstall = new Thread(() => runADB("install " + args[1], 10));
             //threadInstall.Start();
             Console.WriteLine("\n************LOGCAT STARTED****************\n");
-            ADBClient.runADB("logcat", timeout);
+            //ADBClient.runADB("logcat", timeout);
             Console.WriteLine("\n************LOGCAT ENDED*****************\n");
             //runADB("logcat ActivityManager:I *:S", timeout);
             Console.WriteLine("END MAIN.");

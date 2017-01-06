@@ -46,8 +46,8 @@ namespace netcore_redis
 
                 now = DateTime.UtcNow;
                 difference = now.Subtract(startTime);
-                if (difference.TotalSeconds > timeout)
-                    waitLogcat = false;
+                /*if (difference.TotalSeconds > timeout)
+                    waitLogcat = false;*/
                 if (!String.IsNullOrWhiteSpace(line))//treba da se testira
                     Console.WriteLine(line);
             };
