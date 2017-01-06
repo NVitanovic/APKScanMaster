@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Diagnostics;
 using System.Net;
 
@@ -11,6 +11,10 @@ namespace ADBLibrary
     {
         public static List<ADBDevice> devices;
         public static int logcatTimeout = 45;
+
+        public static void Main()
+        {
+        }
 
         public int LogcatTimeout
         {
@@ -26,13 +30,17 @@ namespace ADBLibrary
 
         public static void getDevices()
         {
-            Process proc = runADB("devices");
+            Process proc = runADB("devices",false);
             String line = proc.StandardOutput.ReadLine();
-            while(!String.IsNullOrEmpty(line))
+            while (!String.IsNullOrEmpty(line))
             {
                 String[] str = line.Split('\t');
-                ADBDevice device = new ADBDevice(str[0], str[1]);
-                devices.Add(device);
+                if (!line.Contains("List of devices attached"))
+                {
+                    ADBDevice device = new ADBDevice(str[0], str[1]);
+                    devices.Add(device);
+                }
+                line = proc.StandardOutput.ReadLine();
             }
         }
 
@@ -40,58 +48,54 @@ namespace ADBLibrary
         {
             IPAddress tmp;
             if (IPAddress.TryParse(ip, out tmp))
-                runADB("connect " + ip);
+                runADB("connect " + ip, false);
             else
                 throw new Exception("Invalid ip address.");
         }
 
         public static void clearLogcat()
         {
-            runADB("logcat -c");
+            runADB("logcat -c",false);
         }
 
         public static String getLogcat(int timeout)
         {
             clearLogcat();
-            DateTime now, startTime;
-            TimeSpan timeDifference;
             String logcat = null;
-            bool waitLogcat = true;
 
-            Process proc = runADB("logcat ActivityManager:I *:S");
-            startTime = DateTime.UtcNow;
-            while(waitLogcat)
-            {
-                logcat += proc.StandardOutput.ReadLine();
-                now = DateTime.UtcNow;
-                timeDifference = now.Subtract(startTime);
-                if (timeDifference.TotalSeconds > timeout)
-                {
-                    waitLogcat = false;
-                    proc.Dispose();
-                }
-            }
+            Process proc = runADB("logcat ActivityManager:I *:S", true);
+            //Process proc = runADB("logcat",true);
+
+            logcat = proc.StandardOutput.ReadToEnd();
+
+            proc.Dispose();
             return logcat;
         }
 
         public static Dictionary<String, bool> parseLogcat(String[] keyphrases)
         {
-            Dictionary<String, bool> results = new Dictionary<string, bool>();
+            Console.WriteLine("parseLogcat: STARTED");
+            Dictionary<String, bool> results = new Dictionary<String, bool>();
             String logcat = getLogcat(logcatTimeout);
-            for(int i = 0; i < keyphrases.Length; i++)
+            if (String.IsNullOrEmpty(logcat))
             {
-                if (logcat.IndexOf(keyphrases[i]) != -1)
+                throw new Exception("logcat is empty");
+            }
+            for (int i = 0; i < keyphrases.Length; i++)
+            {
+                Console.WriteLine("parseLogcat: finding");
+                if (logcat.IndexOf(keyphrases[i], StringComparison.CurrentCultureIgnoreCase) != -1)
                     results.Add(keyphrases[i], true);
                 else
                     results.Add(keyphrases[i], false);
             }
-
+            Console.WriteLine("parseLogcat: ENDED");
             return results;
         }
 
-        private static Process runADB(String args)
+        private static Process runADB(String args, bool killIfLogcat)
         {
-            
+
             Process proc = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -104,7 +108,20 @@ namespace ADBLibrary
                 }
             };
             proc.Start();
+            if (killIfLogcat)
+            {
+                if (!proc.WaitForExit(logcatTimeout * 1000))
+                {
+                    proc.Kill();
+                }
+            }
+                
             return proc;
+        }
+
+        public static bool installApk(String path)
+        {
+            return true;
         }
     }
 
@@ -119,4 +136,6 @@ namespace ADBLibrary
             this.name = name;
         }
     }
+
+    
 }
