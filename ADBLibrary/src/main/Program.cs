@@ -10,8 +10,11 @@ namespace main
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("STARTED VERSION: 9");
+            Console.WriteLine("STARTED VERSION: 11");
             ADBLibrary.ADBClient.connectToDevice("192.168.4.101");
+            ADBLibrary.ADBClient.installApk("/home/koma/koma/apk/testvirus.apk");
+            Console.WriteLine("Package name is " + ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.apk"));
+
             ADBLibrary.ADBClient.clearLogcat();
             ADBLibrary.ADBClient.logcatTimeout = 58;
 
@@ -28,7 +31,7 @@ namespace main
             Dictionary<String, bool> results = ADBLibrary.ADBClient.parseLogcat(logcatAntivirusKeyword);
             for (int i = 0; i < results.Count; i++)
             {
-                Console.WriteLine(logcatAntivirusKeyword[i] + "\t\tsays that file is a virus " + results[logcatAntivirusKeyword[i]]);
+                Console.WriteLine("[" + logcatAntivirusKeyword[i] + "] says that file is a virus " + results[logcatAntivirusKeyword[i]]);
             }
             Console.WriteLine("END MAIN");
             Console.ReadLine();

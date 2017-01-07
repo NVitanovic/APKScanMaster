@@ -121,8 +121,50 @@ namespace ADBLibrary
 
         public static bool installApk(String path)
         {
-            return true;
+            Process proc = runADB("install " + path,false);
+            String result = proc.StandardOutput.ReadToEnd();
+            if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)
+            {
+                if (result.IndexOf("Failure", StringComparison.CurrentCultureIgnoreCase) != -1)//just in case that file is success.apk
+                {
+                    Console.WriteLine("Failure while installing");
+                    return false;
+                }else
+                {
+                    Console.WriteLine("Installed successfully");
+                    return true;
+                }
+            }else
+            {
+                Console.WriteLine("Failure while installing!!!");
+                return false;
+            }
         }
+        //aapt dump badging <putanja do apk> | grep package:\ name
+        //result is:
+        //package: name='com.androidantivirus.testvirus' versionCode='8' versionName='1.8' platformBuildVersionName='5.1.1-1819727'
+
+        public static String getPackageNameFromApk(String path)
+        {
+            Process proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName ="aapt",
+                    Arguments = "dump badging " + path + " | grep package:\\ name", 
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                }
+            };
+            proc.Start();
+            String result = proc.StandardOutput.ReadToEnd();
+            String[] results = result.Split(' ');
+            result = results[1].Substring(6, results[1].Length - 7);
+            return result;
+        }
+
+
     }
 
     public class ADBDevice
