@@ -143,7 +143,6 @@ namespace ADBLibrary
         //aapt dump badging <putanja do apk> | grep package:\ name
         //result is:
         //package: name='com.androidantivirus.testvirus' versionCode='8' versionName='1.8' platformBuildVersionName='5.1.1-1819727'
-
         public static String getPackageNameFromApk(String path)
         {
             Process proc = new Process
@@ -162,6 +161,30 @@ namespace ADBLibrary
             String[] results = result.Split(' ');
             result = results[1].Substring(6, results[1].Length - 7);
             return result;
+        }
+
+        public static bool unInstallApk(String packageName)
+        {
+            Process proc = runADB("uninstall " + packageName, false);
+            String result = proc.StandardOutput.ReadToEnd();
+            if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)
+            {
+                if (result.IndexOf("Failure", StringComparison.CurrentCultureIgnoreCase) != -1)
+                {
+                    Console.WriteLine("Failure while uninstalling");
+                    return false;
+                }
+                else
+                {
+                    Console.WriteLine("Uninstalled successfully");
+                    return true;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Failure while uninstalling!!!");
+                return false;
+            }
         }
 
 
