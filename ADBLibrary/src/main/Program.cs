@@ -10,6 +10,8 @@ namespace main
     {
         public static void Main(string[] args)
         {
+            /*
+            Console.ReadLine();
             Console.WriteLine("STARTED VERSION: 11");
             ADBLibrary.ADBClient.connectToDevice("192.168.4.101");
             ADBLibrary.ADBClient.installApk("/home/koma/koma/apk/testvirus.apk");
@@ -33,6 +35,11 @@ namespace main
             {
                 Console.WriteLine("[" + logcatAntivirusKeyword[i] + "] says that file is a virus " + results[logcatAntivirusKeyword[i]]);
             }
+            */
+            if (ADBLibrary.ADBClient.downloadFile("www.cigani.xyz/1/vpn.jpg"))
+                Console.WriteLine("File saved");
+            else
+                Console.WriteLine("Error while downloading");
             Console.WriteLine("END MAIN");
             Console.ReadLine();
         }

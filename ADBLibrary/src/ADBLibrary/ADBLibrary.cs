@@ -187,6 +187,35 @@ namespace ADBLibrary
             }
         }
 
+        public static bool downloadFile(String url)
+        {
+            url += " -q -P /home/koma/koma/"; //quiet, save files to directory
+            Process proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "wget",
+                    Arguments = url,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                }
+            };
+            proc.Start();
+            String result = proc.StandardOutput.ReadToEnd();
+            if (result.IndexOf("' saved [", StringComparison.CurrentCultureIgnoreCase) != -1) //wget returns this if success
+            {
+                Console.WriteLine("Error while download a file");
+                return false;
+            }else
+            {
+                return true;
+            }
+
+
+           
+        }
+
 
     }
 
