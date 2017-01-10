@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "AdbOverWifi": {
-      "commandName": "Project",
-      "commandLineArgs": "192.168.0.101:5555 \"D:\\Downloads\\TS3.apk\" 5"
-    }
-  }
-}
