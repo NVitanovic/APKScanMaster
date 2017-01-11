@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Threading;
 using StackExchange.Redis;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.IO;
+using System.Collections.Generic;
 
 namespace main
 {
@@ -8,6 +12,9 @@ namespace main
     {
         public static void Main(string[] args)
         {
+            Config config = configuration("config.json");
+
+            /*
             Console.WriteLine("STARTED VERSION: 19");
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
@@ -23,7 +30,7 @@ namespace main
                 Console.WriteLine(db1.ListLeftPush("receive", message, flags: CommandFlags.None));
                 Console.WriteLine(sub.Publish("receive", "x"));
             }
-
+            */
             /*
             
             ADBLibrary.ADBClient.connectToDevice("192.168.4.101");
@@ -74,6 +81,27 @@ namespace main
                 });
                 Thread.Sleep(100);
             }
+        }
+
+        public static Config configuration(String path)
+        {
+            string jsonFromFile = File.ReadAllText(path);
+            dynamic parsedJsonObject = JObject.Parse(jsonFromFile);
+            var redis = parsedJsonObject.redis;
+            var masters = redis.masters;
+            var slaves = redis.slaves;
+            var android_vm = parsedJsonObject.android_vm;
+            var download_server = parsedJsonObject.download_server;
+            var android_vm_wait_time = parsedJsonObject.android_vm_wait_time;
+
+            Config config = new Config();
+            config.masters = masters.ToObject<List<string>>();
+            config.slaves = slaves.ToObject<List<string>>();
+            config.android_vm = android_vm.ToObject<List<string>>();
+            config.android_vm_wait_time = android_vm_wait_time.ToObject<String>();
+            config.download_server = download_server.ToObject<String>();
+
+            return config;
         }
     }
 }
