@@ -11,5 +11,6 @@ namespace main
         public List<string> android_vm { get; set; }
         public String download_server { get; set; }
         public String android_vm_wait_time { get; set; }
+        public String download_location { get; set; }
     }
 }

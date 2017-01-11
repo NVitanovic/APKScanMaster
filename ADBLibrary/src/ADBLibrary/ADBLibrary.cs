@@ -187,9 +187,15 @@ namespace ADBLibrary
             }
         }
 
-        public static bool downloadFile(String url)
+        public static bool downloadFile(String url, String downloadLocation)
         {
-            url += " -q -P /home/koma/koma/"; //quiet, save files to directory
+            //strip hash from downloadLocation http://IP/uploads/{hash}
+            String newName = downloadLocation + url.Substring(url.LastIndexOf("/") + 1, url.Length - url.LastIndexOf("/") - 1) + ".apk";
+            Console.WriteLine(url);
+            Console.WriteLine(downloadLocation);
+            Console.WriteLine(newName);
+            url += " -P " + downloadLocation + " -O " + newName + " -q" ; //quiet, save files to directory with a name /path/hask.apk
+            Console.WriteLine("url je:" + url);
             Process proc = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -207,16 +213,12 @@ namespace ADBLibrary
             {
                 Console.WriteLine("Error while download a file");
                 return false;
-            }else
+            }
+            else
             {
                 return true;
             }
-
-
-           
         }
-
-
     }
 
     public class ADBDevice

@@ -18,5 +18,6 @@
 		"192.168.4.101:5556"
 	],
 	"download_server" : "http://www.cigani.xyz/1/",
-	"android_vm_wait_time" : "60"
+	"android_vm_wait_time" : "60",
+	"download_location" : "/home/koma/koma/"
 }

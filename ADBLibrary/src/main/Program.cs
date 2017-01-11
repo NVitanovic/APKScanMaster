@@ -12,10 +12,11 @@ namespace main
     {
         public static void Main(string[] args)
         {
+            Console.WriteLine("STARTED VERSION: 20");
             Config config = configuration("config.json");
 
             /*
-            Console.WriteLine("STARTED VERSION: 19");
+            
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
             ISubscriber sub = redis1.GetSubscriber();
@@ -55,12 +56,12 @@ namespace main
             {
                 Console.WriteLine("[" + logcatAntivirusKeyword[i] + "] says that file is a virus " + results[logcatAntivirusKeyword[i]]);
             }
-            
-            if (ADBLibrary.ADBClient.downloadFile("www.cigani.xyz/1/vpn.jpg"))
+            */
+            if (ADBLibrary.ADBClient.downloadFile(config.download_server + "com.spotify.music-15994536", config.download_location))
                 Console.WriteLine("File saved");
             else
                 Console.WriteLine("Error while downloading");
-                */
+                
             Console.WriteLine("END MAIN");
             Console.ReadLine();
         }
@@ -93,6 +94,7 @@ namespace main
             var android_vm = parsedJsonObject.android_vm;
             var download_server = parsedJsonObject.download_server;
             var android_vm_wait_time = parsedJsonObject.android_vm_wait_time;
+            var download_location = parsedJsonObject.download_location;
 
             Config config = new Config();
             config.masters = masters.ToObject<List<string>>();
@@ -100,7 +102,7 @@ namespace main
             config.android_vm = android_vm.ToObject<List<string>>();
             config.android_vm_wait_time = android_vm_wait_time.ToObject<String>();
             config.download_server = download_server.ToObject<String>();
-
+            config.download_location = download_location.ToObject<String>();
             return config;
         }
     }
