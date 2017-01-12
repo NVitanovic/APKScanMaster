@@ -12,6 +12,19 @@ namespace RedisTest
     {
         public static void Main(string[] args)
         {
+            ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000");
+            IDatabase db1 = redis1.GetDatabase();
+            ISubscriber sub = redis1.GetSubscriber();
+
+
+            while (true)
+            {
+                Console.Write("Enter your message: ");
+                String message = Console.ReadLine();
+                Console.WriteLine(db1.ListLeftPush("send", message, flags: CommandFlags.None));
+                Console.WriteLine(sub.Publish("send", "x"));
+            }
+
             /*
             //komin test redis-a
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("localhost");
@@ -45,7 +58,7 @@ namespace RedisTest
                 }
                 Thread.Sleep(5000);
             }
-            */
+            
 
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.211:7000");
             IDatabase db1 = redis1.GetDatabase();
@@ -65,7 +78,7 @@ namespace RedisTest
             db3.StringSet("rediskey1", value3);
             Console.WriteLine(db1.StringGet("rediskey1"));
 
-            /*
+            
             HttpClient client = new HttpClient();
             var getresponse = client.GetAsync("http://httpbin.org/get");
             Console.WriteLine(getresponse.Result.Content.ReadAsStringAsync().Result.ToString());

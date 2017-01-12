@@ -11,7 +11,7 @@ namespace ADBLibrary
     {
         public static List<ADBDevice> devices;
         public static int logcatTimeout = 45;
-
+        public static String INVALID_APK = "0 error";
         public static void Main()
         {
         }
@@ -46,11 +46,14 @@ namespace ADBLibrary
 
         public static void connectToDevice(String ip)   //TODO: add PORT, currently not using it
         {
+            /*
             IPAddress tmp;
             if (IPAddress.TryParse(ip, out tmp))
                 runADB("connect " + ip, false);
             else
                 throw new Exception("Invalid ip address.");
+            */
+            runADB("connect " + ip,false);
         }
 
         public static void clearLogcat()
@@ -156,12 +159,22 @@ namespace ADBLibrary
                     CreateNoWindow = true
                 }
             };
-            proc.Start();
-            String result = proc.StandardOutput.ReadToEnd();
-            String[] results = result.Split(' ');
-            result = results[1].Substring(6, results[1].Length - 7);
-            return result;
+            String result = "";
+            try
+            {
+                proc.Start();
+                result = proc.StandardOutput.ReadToEnd();
+                String[] results = result.Split(' ');
+                result = results[1].Substring(6, results[1].Length - 7);
+                return result;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception: " + e);
+                return INVALID_APK;
+            }
         }
+
 
         public static bool unInstallApk(String packageName)
         {
