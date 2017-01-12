@@ -30,7 +30,7 @@ namespace main
                 Console.WriteLine(result);
             }else {
                 
-
+               
                 /*
                 ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
                 IDatabase db1 = redis1.GetDatabase();
@@ -96,6 +96,8 @@ namespace main
                     if (work != null)
                     {
                         Console.WriteLine((string)work);
+                        //deserialize a message from publisher
+                        ADBLibrary.ADBClient.installApk(config.android_vm[3],(string)work);
                     }
                 });
                 Thread.Sleep(100);

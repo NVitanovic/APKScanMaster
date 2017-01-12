@@ -30,7 +30,7 @@ namespace ADBLibrary
 
         public static void getDevices()
         {
-            Process proc = runADB("devices",false);
+            Process proc = runADB("", "devices",false);
             String line = proc.StandardOutput.ReadLine();
             while (!String.IsNullOrEmpty(line))
             {
@@ -53,20 +53,20 @@ namespace ADBLibrary
             else
                 throw new Exception("Invalid ip address.");
             */
-            runADB("connect " + ip,false);
+            runADB("","connect " + ip,false);
         }
 
-        public static void clearLogcat()
+        public static void clearLogcat(String ipport)
         {
-            runADB("logcat -c",false);
+            runADB(ipport, "logcat -c",false);
         }
 
-        public static String getLogcat(int timeout)
+        public static String getLogcat(String ipport, int timeout)
         {
-            clearLogcat();
+            clearLogcat(ipport);
             String logcat = null;
 
-            Process proc = runADB("logcat ActivityManager:I *:S", true);    //silence all other except from Activitymanager
+            Process proc = runADB(ipport, "logcat ActivityManager:I *:S", true);    //silence all other except from Activitymanager
             //Process proc = runADB("logcat",true);
 
             logcat = proc.StandardOutput.ReadToEnd();
@@ -75,11 +75,11 @@ namespace ADBLibrary
             return logcat;
         }
 
-        public static Dictionary<String, bool> parseLogcat(String[] keyphrases)
+        public static Dictionary<String, bool> parseLogcat(String ipport, String[] keyphrases)
         {
             Console.WriteLine("parseLogcat: STARTED");
             Dictionary<String, bool> results = new Dictionary<String, bool>();
-            String logcat = getLogcat(logcatTimeout);
+            String logcat = getLogcat(ipport, logcatTimeout);
             if (String.IsNullOrEmpty(logcat))
             {
                 throw new Exception("logcat is empty");
@@ -96,15 +96,21 @@ namespace ADBLibrary
             return results;
         }
 
-        private static Process runADB(String args, bool killIfLogcat)
+        private static Process runADB(String ipport, String args, bool killIfLogcat)
         {
-
+            String arguments = "";
+            if (ipport != "")
+            {
+                arguments = " -s " + ipport + " ";
+            }
+            arguments += args;
+            Console.WriteLine("runADB arguments " + arguments);
             Process proc = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "adb",
-                    Arguments = args,
+                    Arguments = arguments,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
@@ -122,9 +128,11 @@ namespace ADBLibrary
             return proc;
         }
 
-        public static bool installApk(String path)
+        public static bool installApk(String ipport, String path)
         {
-            Process proc = runADB("install " + path,false);
+            Console.WriteLine("installing apk " + path);
+            Console.WriteLine("ipport " + ipport);
+            Process proc = runADB(ipport, " install " + path,false);
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)
             {
@@ -176,9 +184,9 @@ namespace ADBLibrary
         }
 
 
-        public static bool unInstallApk(String packageName)
+        public static bool unInstallApk(String ipport, String packageName)
         {
-            Process proc = runADB("uninstall " + packageName, false);
+            Process proc = runADB(ipport, "uninstall " + packageName, false);
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)
             {
