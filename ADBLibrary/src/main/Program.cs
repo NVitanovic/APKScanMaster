@@ -120,6 +120,9 @@ namespace main
         public static Config configuration(String path)
         {
             string jsonFromFile = File.ReadAllText(path);
+
+            Config config = JsonConvert.DeserializeObject<Config>(jsonFromFile);
+            /*
             dynamic parsedJsonObject = JObject.Parse(jsonFromFile);
             var redis = parsedJsonObject.redis;
             var masters = redis.masters;
@@ -140,6 +143,7 @@ namespace main
             config.download_location = download_location.ToObject<String>();
             config.logcat_timeout = logcat_timeout.ToObject<String>();
             config.android_vm_antivirus_keywords = android_vm_antivirus_keywords.ToObject<List<string>>();
+            */
             return config;
         }
 
