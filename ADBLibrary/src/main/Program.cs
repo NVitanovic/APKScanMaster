@@ -13,12 +13,13 @@ namespace main
     public class Program
     {
         public static String INVALID_APK = "0 error";
-        public static Config config = new Config();
+        public static Config config = configuration("config.json");
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 23");
-            Config config = configuration("config.json");
-            startAllAndroidVM();
+            
+            
+            //startAllAndroidVM();
 
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
@@ -101,12 +102,17 @@ namespace main
                         if (work != null)
                         {
                             Console.WriteLine((string)work);
-                        //deserialize a message from publisher
-                        //deserialize into RedisSend object
-
-                            RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
-                            downloadFile("http://192.168.4.20/download/", data.hash, data.filename.Substring(data.filename.Length - data.filename.IndexOf(".")));//super 1337 hax to find file extension
-
+                            //deserialize a message from publisher
+                            //deserialize into RedisSend object
+                            try
+                            {
+                                RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
+                                downloadFile(config.download_server, data.hash, data.filename.Substring(data.filename.Length - data.filename.IndexOf(".")));//super 1337 hax to find file extension
+                            }
+                            catch(Exception e)
+                            {
+                                Console.WriteLine(e.StackTrace);
+                            }
                             //ADBLibrary.ADBClient.installApk(config.android_vm[3], data.hash + data);
                         //need to send RedisReceive object to server as result of operation
                         }
@@ -157,10 +163,11 @@ namespace main
 
         public static void downloadFile(String uri, String fileName, String fileExtension)
         {
+            Console.WriteLine("Poceo skidanje fajla.");
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(uri);
             client.Timeout = TimeSpan.FromMinutes(5);
-            string requestUrl = uri + "/" + fileName;
+            string requestUrl = uri + fileName;
 
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
             var sendTask = client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -171,6 +178,7 @@ namespace main
             var reader = new StreamReader(httpStream.Result);
             httpStream.Result.CopyTo(fileStream);
             fileStream.Flush();
+            Console.WriteLine("Zavrsio skidanje fajla.");
         }
     }
 }
