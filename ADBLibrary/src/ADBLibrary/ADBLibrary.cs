@@ -30,7 +30,7 @@ namespace ADBLibrary
 
         public static void getDevices()
         {
-            Process proc = runADB("", "devices",false);
+            Process proc = runADB("", "devices", false);
             String line = proc.StandardOutput.ReadLine();
             while (!String.IsNullOrEmpty(line))
             {
@@ -53,12 +53,12 @@ namespace ADBLibrary
             else
                 throw new Exception("Invalid ip address.");
             */
-            runADB("","connect " + ip,false);
+            runADB("", "connect " + ip, false);
         }
 
         public static void clearLogcat(String ipport)
         {
-            runADB(ipport, "logcat -c",false);
+            runADB(ipport, "logcat -c", false);
         }
 
         public static String getLogcat(String ipport, int timeout)
@@ -124,7 +124,7 @@ namespace ADBLibrary
                     proc.Kill();
                 }
             }
-                
+
             return proc;
         }
 
@@ -132,7 +132,7 @@ namespace ADBLibrary
         {
             Console.WriteLine("installing apk " + path);
             Console.WriteLine("ipport " + ipport);
-            Process proc = runADB(ipport, " install " + path,false);
+            Process proc = runADB(ipport, " install " + path, false);
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)
             {
@@ -140,12 +140,14 @@ namespace ADBLibrary
                 {
                     Console.WriteLine("Failure while installing");
                     return false;
-                }else
+                }
+                else
                 {
                     Console.WriteLine("Installed successfully");
                     return true;
                 }
-            }else
+            }
+            else
             {
                 Console.WriteLine("Failure while installing!!!");
                 return false;
@@ -160,8 +162,8 @@ namespace ADBLibrary
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName ="aapt",
-                    Arguments = "dump badging " + path + " | grep package:\\ name", 
+                    FileName = "aapt",
+                    Arguments = "dump badging " + path + " | grep package:\\ name",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
@@ -208,51 +210,17 @@ namespace ADBLibrary
             }
         }
 
-        public static bool downloadFile(String url, String downloadLocation)
+        public class ADBDevice
         {
-            //strip hash from downloadLocation http://IP/uploads/{hash}
-            String newName = downloadLocation + url.Substring(url.LastIndexOf("/") + 1, url.Length - url.LastIndexOf("/") - 1) + ".apk";
-            Console.WriteLine(url);
-            Console.WriteLine(downloadLocation);
-            Console.WriteLine(newName);
-            url += " -P " + downloadLocation + " -O " + newName + " -q" ; //quiet, save files to directory with a name /path/hask.apk
-            Console.WriteLine("url je:" + url);
-            Process proc = new Process
+            public String connection;//prvi deo adb devices
+            public String name;//drugi deo adb devices
+
+            public ADBDevice(String connection, String name)
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "wget",
-                    Arguments = url,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
-            };
-            proc.Start();
-            String result = proc.StandardOutput.ReadToEnd();
-            if (result.IndexOf("' saved [", StringComparison.CurrentCultureIgnoreCase) != -1) //wget returns this if success
-            {
-                Console.WriteLine("Error while download a file");
-                return false;
-            }
-            else
-            {
-                return true;
+                this.connection = connection;
+                this.name = name;
             }
         }
+
     }
-
-    public class ADBDevice
-    {
-        public String connection;//prvi deo adb devices
-        public String name;//drugi deo adb devices
-
-        public ADBDevice(String connection, String name)
-        {
-            this.connection = connection;
-            this.name = name;
-        }
-    }
-
-    
 }

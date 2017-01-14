@@ -26,7 +26,10 @@ namespace main
             ISubscriber sub = redis1.GetSubscriber();
             //redisSubscribe(db1, sub);
             downloadFile("http://www.cigani.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
-
+            downloadFile("http://www.cdfgdfgdfgdfgdfgdfgdfgdgi.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
+            downloadFile("http://www.cigani.xyz/1", "vpn.jpg", ".jpg", "TESTDL2");
+            
+            
 
             //Console.WriteLine(ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/z.apk"));
             //String result = ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.txt");
@@ -161,30 +164,52 @@ namespace main
             }
         }
 
-        public static void downloadFile(String uri, String fileName, String fileExtension, String path)
+        public static bool downloadFile(String uri, String fileName, String fileExtension, String path)
         {
-            Console.WriteLine("Poceo skidanje fajla.");
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(uri);
-            client.Timeout = TimeSpan.FromMinutes(5);
-            string requestUrl = uri + fileName;
+            try
+            {
+                Console.WriteLine("Poceo skidanje fajla.");
+                HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(uri);
+                client.Timeout = TimeSpan.FromMinutes(5);
+                string requestUrl = uri + fileName;
 
-            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
-            var sendTask = client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            var response = sendTask.Result.EnsureSuccessStatusCode();
-            var httpStream = response.Content.ReadAsStreamAsync();
+                var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
 
-            var pathOnDisk = Path.Combine(path, fileName.Substring(0, fileName.IndexOf(".")) + fileExtension);
+                var sendTask = client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                var response = sendTask.Result;
+                if (response.Content.Headers.ContentLength == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    var httpStream = response.Content.ReadAsStreamAsync();
 
-            var fileStream = File.Create(pathOnDisk);
-            var reader = new StreamReader(httpStream.Result);
-            httpStream.Result.CopyTo(fileStream);
-            fileStream.Flush();
-            fileStream.Dispose();
-            Console.WriteLine("Zavrsio skidanje fajla.");
+                    if (!Directory.Exists(path))
+                        Directory.CreateDirectory(path);
+
+                    var pathOnDisk = Path.Combine(path, fileName.Substring(0, fileName.IndexOf(".")) + fileExtension);
+
+                    var fileStream = File.Create(pathOnDisk);
+                    var reader = new StreamReader(httpStream.Result);
+
+                    httpStream.Result.CopyTo(fileStream);
+                    fileStream.Flush();
+                    fileStream.Dispose();
+                    Console.WriteLine("Zavrsio skidanje fajla.");
+                    return true;
+                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+                return false;
+            }
+           
+            
+
         }
     }
 }
