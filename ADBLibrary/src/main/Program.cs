@@ -5,6 +5,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Collections.Generic;
+using APKScanSharedClasses;
+using System.Net.Http;
 
 namespace main
 {
@@ -21,65 +23,67 @@ namespace main
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
             ISubscriber sub = redis1.GetSubscriber();
-            redisSubscribe(db1, sub);
+            //redisSubscribe(db1, sub);
+            downloadFile("http://www.cigani.xyz/1", "vpn.jpg");
+
 
             //Console.WriteLine(ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/z.apk"));
-            String result = ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.txt");
-            if(result != INVALID_APK)   //shitty test if file is valid APK
+            //String result = ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.txt");
+            //if(result != INVALID_APK)   //shitty test if file is valid APK
+            //{
+            //    Console.WriteLine(result);
+            //}else {
+
+
+            /*
+            ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
+            IDatabase db1 = redis1.GetDatabase();
+            ISubscriber sub = redis1.GetSubscriber();
+
+            Thread threadSubscribe = new Thread(() => redisSubscribe(db1, sub));
+            threadSubscribe.Start();
+
+            while (true)
             {
-                Console.WriteLine(result);
-            }else {
-                
-               
-                /*
-                ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
-                IDatabase db1 = redis1.GetDatabase();
-                ISubscriber sub = redis1.GetSubscriber();
-
-                Thread threadSubscribe = new Thread(() => redisSubscribe(db1, sub));
-                threadSubscribe.Start();
-
-                while (true)
-                {
-                    Console.Write("Enter your message: ");
-                    String message = Console.ReadLine();
-                    Console.WriteLine(db1.ListLeftPush("receive", message, flags: CommandFlags.None));
-                    Console.WriteLine(sub.Publish("receive", "x"));
-                }
-                */
-                /*
-
-                ADBLibrary.ADBClient.connectToDevice("192.168.4.101");
-                ADBLibrary.ADBClient.installApk("/home/koma/koma/apk/testvirus.apk");
-                Console.WriteLine("Package name is " + ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.apk"));
-
-                ADBLibrary.ADBClient.clearLogcat();
-                ADBLibrary.ADBClient.logcatTimeout = 58;
-
-                String[] logcatAntivirusKeyword = {
-                    "virus",
-                    "VirusScannerShieldDialogActivity", //AVAST
-                    "pera",
-                    "com.antivirus/.ui.scan.UnInstall", //AVG
-                    "com.cleanmaster.security/ks.cm.antivirus.installmonitor.InstallMonitorNoticeActivity",   //CM Security
-                    "com.bitdefender.antivirus/.NotifyUserMalware", //BIT DEFENDER
-                    "org.malwarebytes.antimalware/.security.scanner.activity.alert.MalwareAppAlertActivity" //MALWAREBYTES
-                };
-
-                Dictionary<String, bool> results = ADBLibrary.ADBClient.parseLogcat(logcatAntivirusKeyword);
-                for (int i = 0; i < results.Count; i++)
-                {
-                    Console.WriteLine("[" + logcatAntivirusKeyword[i] + "] says that file is a virus " + results[logcatAntivirusKeyword[i]]);
-                }
-
-                if (ADBLibrary.ADBClient.downloadFile(config.download_server + "com.spotify.music-15994536", config.download_location))
-                    Console.WriteLine("File saved");
-                else
-                    Console.WriteLine("Error while downloading");
-                */
-                //-------------------------------------------------
+                Console.Write("Enter your message: ");
+                String message = Console.ReadLine();
+                Console.WriteLine(db1.ListLeftPush("receive", message, flags: CommandFlags.None));
+                Console.WriteLine(sub.Publish("receive", "x"));
             }
-        
+            */
+            /*
+
+            ADBLibrary.ADBClient.connectToDevice("192.168.4.101");
+            ADBLibrary.ADBClient.installApk("/home/koma/koma/apk/testvirus.apk");
+            Console.WriteLine("Package name is " + ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.apk"));
+
+            ADBLibrary.ADBClient.clearLogcat();
+            ADBLibrary.ADBClient.logcatTimeout = 58;
+
+            String[] logcatAntivirusKeyword = {
+                "virus",
+                "VirusScannerShieldDialogActivity", //AVAST
+                "pera",
+                "com.antivirus/.ui.scan.UnInstall", //AVG
+                "com.cleanmaster.security/ks.cm.antivirus.installmonitor.InstallMonitorNoticeActivity",   //CM Security
+                "com.bitdefender.antivirus/.NotifyUserMalware", //BIT DEFENDER
+                "org.malwarebytes.antimalware/.security.scanner.activity.alert.MalwareAppAlertActivity" //MALWAREBYTES
+            };
+
+            Dictionary<String, bool> results = ADBLibrary.ADBClient.parseLogcat(logcatAntivirusKeyword);
+            for (int i = 0; i < results.Count; i++)
+            {
+                Console.WriteLine("[" + logcatAntivirusKeyword[i] + "] says that file is a virus " + results[logcatAntivirusKeyword[i]]);
+            }
+
+            if (ADBLibrary.ADBClient.downloadFile(config.download_server + "com.spotify.music-15994536", config.download_location))
+                Console.WriteLine("File saved");
+            else
+                Console.WriteLine("Error while downloading");
+            */
+            //-------------------------------------------------
+            //}
+
             Console.WriteLine("END MAIN");
             Console.ReadLine();
         }
@@ -87,21 +91,29 @@ namespace main
         public static void redisSubscribe(IDatabase db1, ISubscriber sub)
         {
             Console.WriteLine("thread redisSubscribe started");
-            while (true)
-            {
-                sub.Subscribe("send", (channel, message) =>
+            //Thread t = new Thread(()  => {
+                while (true)
                 {
+                    sub.Subscribe("send", (channel, message) =>
+                    {
                     //Console.WriteLine("************");
                     string work = db1.ListRightPop("send");
-                    if (work != null)
-                    {
-                        Console.WriteLine((string)work);
+                        if (work != null)
+                        {
+                            Console.WriteLine((string)work);
                         //deserialize a message from publisher
-                        ADBLibrary.ADBClient.installApk(config.android_vm[3],(string)work);
+                        //deserialize into RedisSend object
+
+                            RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
+                            
+                        //ADBLibrary.ADBClient.installApk(config.android_vm[3], (string)work);
+                        //need to send RedisReceive object to server as result of operation
                     }
-                });
-                Thread.Sleep(100);
-            }
+                    });
+                    Thread.Sleep(100);
+                }
+            //});
+            //t.Start();
         }
 
         public static Config configuration(String path)
@@ -136,6 +148,24 @@ namespace main
             {
                 ADBLibrary.ADBClient.connectToDevice(ip);
             }
+        }
+
+        public static void downloadFile(String uri, String fileName)
+        {
+            HttpClient client = new HttpClient();
+            client.BaseAddress = new Uri(uri);
+            client.Timeout = TimeSpan.FromMinutes(5);
+            string requestUrl = uri + "/" + fileName;
+
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+            var sendTask = client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            var response = sendTask.Result.EnsureSuccessStatusCode();
+            var httpStream = response.Content.ReadAsStreamAsync();
+            
+            var fileStream = File.Create(fileName);
+            var reader = new StreamReader(httpStream.Result);
+            httpStream.Result.CopyTo(fileStream);
+            fileStream.Flush();
         }
     }
 }
