@@ -24,8 +24,8 @@ namespace main
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
             ISubscriber sub = redis1.GetSubscriber();
-            redisSubscribe(db1, sub);
-            //downloadFile("http://www.cigani.xyz/1", "vpn.jpg");
+            //redisSubscribe(db1, sub);
+            downloadFile("http://www.cigani.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
 
 
             //Console.WriteLine(ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/z.apk"));
@@ -107,7 +107,7 @@ namespace main
                             try
                             {
                                 RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
-                                downloadFile(config.download_server, data.hash, data.filename.Substring(data.filename.Length - data.filename.IndexOf(".")));//super 1337 hax to find file extension
+                                //downloadFile(config.download_server, data.hash, data.filename.Substring(data.filename.Length - data.filename.IndexOf(".")));//super 1337 hax to find file extension
                             }
                             catch(Exception e)
                             {
@@ -161,7 +161,7 @@ namespace main
             }
         }
 
-        public static void downloadFile(String uri, String fileName, String fileExtension)
+        public static void downloadFile(String uri, String fileName, String fileExtension, String path)
         {
             Console.WriteLine("Poceo skidanje fajla.");
             HttpClient client = new HttpClient();
@@ -173,11 +173,17 @@ namespace main
             var sendTask = client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
             var response = sendTask.Result.EnsureSuccessStatusCode();
             var httpStream = response.Content.ReadAsStreamAsync();
-            
-            var fileStream = File.Create(fileName + fileExtension);
+
+            if (!Directory.Exists(path))
+                Directory.CreateDirectory(path);
+
+            var pathOnDisk = Path.Combine(path, fileName.Substring(0, fileName.IndexOf(".")) + fileExtension);
+
+            var fileStream = File.Create(pathOnDisk);
             var reader = new StreamReader(httpStream.Result);
             httpStream.Result.CopyTo(fileStream);
             fileStream.Flush();
+            fileStream.Dispose();
             Console.WriteLine("Zavrsio skidanje fajla.");
         }
     }
