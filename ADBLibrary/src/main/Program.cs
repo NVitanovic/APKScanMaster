@@ -23,8 +23,8 @@ namespace main
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
             ISubscriber sub = redis1.GetSubscriber();
-            //redisSubscribe(db1, sub);
-            downloadFile("http://www.cigani.xyz/1", "vpn.jpg");
+            redisSubscribe(db1, sub);
+            //downloadFile("http://www.cigani.xyz/1", "vpn.jpg");
 
 
             //Console.WriteLine(ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/z.apk"));
@@ -105,10 +105,11 @@ namespace main
                         //deserialize into RedisSend object
 
                             RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
-                            
-                        //ADBLibrary.ADBClient.installApk(config.android_vm[3], (string)work);
+                            downloadFile("http://192.168.4.20/download/", data.hash, data.filename.Substring(data.filename.Length - data.filename.IndexOf(".")));//super 1337 hax to find file extension
+
+                            //ADBLibrary.ADBClient.installApk(config.android_vm[3], data.hash + data);
                         //need to send RedisReceive object to server as result of operation
-                    }
+                        }
                     });
                     Thread.Sleep(100);
                 }
@@ -150,7 +151,7 @@ namespace main
             }
         }
 
-        public static void downloadFile(String uri, String fileName)
+        public static void downloadFile(String uri, String fileName, String fileExtension)
         {
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(uri);
@@ -162,7 +163,7 @@ namespace main
             var response = sendTask.Result.EnsureSuccessStatusCode();
             var httpStream = response.Content.ReadAsStreamAsync();
             
-            var fileStream = File.Create(fileName);
+            var fileStream = File.Create(fileName + fileExtension);
             var reader = new StreamReader(httpStream.Result);
             httpStream.Result.CopyTo(fileStream);
             fileStream.Flush();
