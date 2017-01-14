@@ -17,9 +17,8 @@ namespace main
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 26");
-            
-            
-            //startAllAndroidVM();
+                   
+            connectToAllAndroidVM();
 
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
@@ -28,47 +27,6 @@ namespace main
             //downloadFile("http://www.cigani.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
             //downloadFile("http://www.cdfgdfgdfgdfgdfgdfgdfgdgi.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
             //downloadFile("http://www.cigani.xyz/1", "vpn.jpg", ".jpg", "TESTDL2");
-            
-            
-
-            //Console.WriteLine(ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/z.apk"));
-            //String result = ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.txt");
-            //if(result != INVALID_APK)   //shitty test if file is valid APK
-            //{
-            //    Console.WriteLine(result);
-            //}else {
-            /*
-
-            ADBLibrary.ADBClient.connectToDevice("192.168.4.101");
-            ADBLibrary.ADBClient.installApk("/home/koma/koma/apk/testvirus.apk");
-            Console.WriteLine("Package name is " + ADBLibrary.ADBClient.getPackageNameFromApk("/home/koma/koma/apk/testvirus.apk"));
-
-            ADBLibrary.ADBClient.clearLogcat();
-            ADBLibrary.ADBClient.logcatTimeout = 58;
-
-            String[] logcatAntivirusKeyword = {
-                "virus",
-                "VirusScannerShieldDialogActivity", //AVAST
-                "pera",
-                "com.antivirus/.ui.scan.UnInstall", //AVG
-                "com.cleanmaster.security/ks.cm.antivirus.installmonitor.InstallMonitorNoticeActivity",   //CM Security
-                "com.bitdefender.antivirus/.NotifyUserMalware", //BIT DEFENDER
-                "org.malwarebytes.antimalware/.security.scanner.activity.alert.MalwareAppAlertActivity" //MALWAREBYTES
-            };
-
-            Dictionary<String, bool> results = ADBLibrary.ADBClient.parseLogcat(logcatAntivirusKeyword);
-            for (int i = 0; i < results.Count; i++)
-            {
-                Console.WriteLine("[" + logcatAntivirusKeyword[i] + "] says that file is a virus " + results[logcatAntivirusKeyword[i]]);
-            }
-            
-            if (ADBLibrary.ADBClient.downloadFile(config.download_server + "com.spotify.music-15994536", config.download_location))
-                Console.WriteLine("File saved");
-            else
-                Console.WriteLine("Error while downloading");
-            */
-            //-------------------------------------------------
-            //}
 
             Console.WriteLine("END MAIN");
             Console.ReadLine();
@@ -111,15 +69,13 @@ namespace main
                                     result.filename = data.filename;
                                     Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
                                     Console.WriteLine(sub.Publish("receive", "x"));
-                                    Console.WriteLine("****************");
+                                    Console.WriteLine("***********************************\n\n");
                                 }
                             }
                             catch(Exception e)
                             {
                                 Console.WriteLine(e.StackTrace);
                             }
-                            //ADBLibrary.ADBClient.installApk(config.android_vm[3], data.hash + data);
-                        //need to send RedisReceive object to server as result of operation
                         }
                     });
                     Thread.Sleep(100);
@@ -158,7 +114,7 @@ namespace main
             return config;
         }
 
-        public static void startAllAndroidVM()
+        public static void connectToAllAndroidVM()
         {
             foreach(String ip in config.android_vm)
             {

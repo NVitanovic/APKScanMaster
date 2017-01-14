@@ -53,7 +53,12 @@ namespace ADBLibrary
             else
                 throw new Exception("Invalid ip address.");
             */
-            runADB("", "connect " + ip, false);
+            Process proc = runADB("", "connect " + ip, false);
+            String result = proc.StandardOutput.ReadToEnd();
+            if (result.IndexOf("connected", StringComparison.CurrentCultureIgnoreCase) == -1)
+            {
+                Console.WriteLine("Can't connect to " + ip);
+            }
         }
 
         public static void clearLogcat(String ipport)
@@ -67,7 +72,6 @@ namespace ADBLibrary
             String logcat = null;
 
             Process proc = runADB(ipport, "logcat ActivityManager:I *:S", true);    //silence all other except from Activitymanager
-            //Process proc = runADB("logcat",true);
 
             logcat = proc.StandardOutput.ReadToEnd();
 
@@ -77,7 +81,7 @@ namespace ADBLibrary
 
         public static Dictionary<String, String> parseLogcat(String ipport, String[] keyphrases)
         {
-            Console.WriteLine("parseLogcat: STARTED");
+            //Console.WriteLine("parseLogcat: STARTED");
             Dictionary<String, String> results = new Dictionary<String, String>();
             String logcat = getLogcat(ipport, logcatTimeout);
             if (String.IsNullOrEmpty(logcat))
@@ -86,13 +90,13 @@ namespace ADBLibrary
             }
             for (int i = 0; i < keyphrases.Length; i++)
             {
-                Console.WriteLine("parseLogcat: finding");
+                //Console.WriteLine("parseLogcat: finding");
                 if (logcat.IndexOf(keyphrases[i], StringComparison.CurrentCultureIgnoreCase) != -1)
                     results.Add(keyphrases[i], "true");
                 else
                     results.Add(keyphrases[i], "false");
             }
-            Console.WriteLine("parseLogcat: ENDED");
+            //Console.WriteLine("parseLogcat: ENDED");
             return results;
         }
 
@@ -104,7 +108,7 @@ namespace ADBLibrary
                 arguments = " -s " + ipport + " ";
             }
             arguments += args;
-            Console.WriteLine("runADB arguments " + arguments);
+            //Console.WriteLine("runADB arguments " + arguments);
             Process proc = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -130,8 +134,8 @@ namespace ADBLibrary
 
         public static bool installApk(String ipport, String path)
         {
-            Console.WriteLine("installing apk " + path);
-            Console.WriteLine("ipport " + ipport);
+            //Console.WriteLine("installing apk " + path);
+            //Console.WriteLine("ipport " + ipport);
             Process proc = runADB(ipport, " install " + path, false);
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)

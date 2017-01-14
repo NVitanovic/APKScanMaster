@@ -21,7 +21,7 @@
   "download_location": "/home/koma/koma/",
   "android_vm_antivirus_keywords": [
     "virus",
-    "VirusScannerShieldDialogActivity",
+    "com.avast.android.mobilesecurity/.app.shields.VirusScannerShieldDialogActivity",
     "pera",
     "com.antivirus/.ui.scan.UnInstall",
     "com.cleanmaster.security/ks.cm.antivirus.installmonitor.InstallMonitorNoticeActivity",
@@ -30,11 +30,11 @@
   ],
   "android_vm_antivirus_app": [
     "virus",
-    "com.avast",
+    "com.avast.android.mobilesecurity",
     "pera",
-    "com.avg",
-    "com.cleanmaster",
-    "com.bitdefender",
-    "com.malwarebytes"
+    "com.antivirus",
+    "com.cleanmaster.security",
+    "com.bitdefender.antivirus",
+    "org.malwarebytes.antimalware"
   ]
 }
