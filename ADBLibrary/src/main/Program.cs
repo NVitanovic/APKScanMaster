@@ -16,7 +16,7 @@ namespace main
         public static Config config = configuration("config.json");
         public static void Main(string[] args)
         {
-            Console.WriteLine("STARTED VERSION: 23");
+            Console.WriteLine("STARTED VERSION: 26");
             
             
             //startAllAndroidVM();
@@ -24,10 +24,10 @@ namespace main
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
             IDatabase db1 = redis1.GetDatabase();
             ISubscriber sub = redis1.GetSubscriber();
-            //redisSubscribe(db1, sub);
-            downloadFile("http://www.cigani.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
-            downloadFile("http://www.cdfgdfgdfgdfgdfgdfgdfgdgi.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
-            downloadFile("http://www.cigani.xyz/1", "vpn.jpg", ".jpg", "TESTDL2");
+            redisSubscribe(db1, sub);
+            //downloadFile("http://www.cigani.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
+            //downloadFile("http://www.cdfgdfgdfgdfgdfgdfgdfgdgi.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
+            //downloadFile("http://www.cigani.xyz/1", "vpn.jpg", ".jpg", "TESTDL2");
             
             
 
@@ -37,24 +37,6 @@ namespace main
             //{
             //    Console.WriteLine(result);
             //}else {
-
-
-            /*
-            ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
-            IDatabase db1 = redis1.GetDatabase();
-            ISubscriber sub = redis1.GetSubscriber();
-
-            Thread threadSubscribe = new Thread(() => redisSubscribe(db1, sub));
-            threadSubscribe.Start();
-
-            while (true)
-            {
-                Console.Write("Enter your message: ");
-                String message = Console.ReadLine();
-                Console.WriteLine(db1.ListLeftPush("receive", message, flags: CommandFlags.None));
-                Console.WriteLine(sub.Publish("receive", "x"));
-            }
-            */
             /*
 
             ADBLibrary.ADBClient.connectToDevice("192.168.4.101");
@@ -79,7 +61,7 @@ namespace main
             {
                 Console.WriteLine("[" + logcatAntivirusKeyword[i] + "] says that file is a virus " + results[logcatAntivirusKeyword[i]]);
             }
-
+            
             if (ADBLibrary.ADBClient.downloadFile(config.download_server + "com.spotify.music-15994536", config.download_location))
                 Console.WriteLine("File saved");
             else
@@ -100,17 +82,37 @@ namespace main
                 {
                     sub.Subscribe("send", (channel, message) =>
                     {
-                    //Console.WriteLine("************");
                     string work = db1.ListRightPop("send");
                         if (work != null)
                         {
                             Console.WriteLine((string)work);
-                            //deserialize a message from publisher
-                            //deserialize into RedisSend object
                             try
                             {
                                 RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
-                                //downloadFile(config.download_server, data.hash, data.filename.Substring(data.filename.Length - data.filename.IndexOf(".")));//super 1337 hax to find file extension
+                                Console.WriteLine("upload IP je " + data.upload_ip);
+                                downloadFile(config.download_server, data.hash, ".apk" ,config.download_location);//super 1337 hax to find file extension
+                                //check if file is really .apk
+                                ADBLibrary.ADBClient.clearLogcat(config.android_vm[1]);
+                                if (ADBLibrary.ADBClient.installApk(config.android_vm[1], config.download_location + data.hash + ".apk"))
+                                {
+                                    RedisReceive result = new RedisReceive();
+                                    Dictionary<String, String> results = ADBLibrary.ADBClient.parseLogcat(config.android_vm[1],config.android_vm_antivirus_keywords.ToArray());
+                                    
+                                    for (int i = 0; i < results.Count; i++)
+                                    {
+                                        Console.WriteLine("[" + config.android_vm_antivirus_app[i] + "] says that file is a virus " + results[config.android_vm_antivirus_keywords[i]]);
+                                        result.av_results.Add(config.android_vm_antivirus_app[i], results[config.android_vm_antivirus_keywords[i]]);
+                                    }
+
+                                    result.master_id = "master1";
+                                    result.hash = data.hash;
+                                    result.upload_date = data.upload_date;
+                                    result.upload_ip = data.upload_ip;
+                                    result.filename = data.filename;
+                                    Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
+                                    Console.WriteLine(sub.Publish("receive", "x"));
+                                    Console.WriteLine("****************");
+                                }
                             }
                             catch(Exception e)
                             {
@@ -190,7 +192,7 @@ namespace main
                     if (!Directory.Exists(path))
                         Directory.CreateDirectory(path);
 
-                    var pathOnDisk = Path.Combine(path, fileName.Substring(0, fileName.IndexOf(".")) + fileExtension);
+                    var pathOnDisk = Path.Combine(path, fileName + fileExtension);
 
                     var fileStream = File.Create(pathOnDisk);
                     var reader = new StreamReader(httpStream.Result);

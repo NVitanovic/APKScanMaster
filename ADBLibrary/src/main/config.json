@@ -27,5 +27,14 @@
     "com.cleanmaster.security/ks.cm.antivirus.installmonitor.InstallMonitorNoticeActivity",
     "com.bitdefender.antivirus/.NotifyUserMalware",
     "org.malwarebytes.antimalware/.security.scanner.activity.alert.MalwareAppAlertActivity"
+  ],
+  "android_vm_antivirus_app": [
+    "virus",
+    "com.avast",
+    "pera",
+    "com.avg",
+    "com.cleanmaster",
+    "com.bitdefender",
+    "com.malwarebytes"
   ]
 }

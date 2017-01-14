@@ -75,10 +75,10 @@ namespace ADBLibrary
             return logcat;
         }
 
-        public static Dictionary<String, bool> parseLogcat(String ipport, String[] keyphrases)
+        public static Dictionary<String, String> parseLogcat(String ipport, String[] keyphrases)
         {
             Console.WriteLine("parseLogcat: STARTED");
-            Dictionary<String, bool> results = new Dictionary<String, bool>();
+            Dictionary<String, String> results = new Dictionary<String, String>();
             String logcat = getLogcat(ipport, logcatTimeout);
             if (String.IsNullOrEmpty(logcat))
             {
@@ -88,9 +88,9 @@ namespace ADBLibrary
             {
                 Console.WriteLine("parseLogcat: finding");
                 if (logcat.IndexOf(keyphrases[i], StringComparison.CurrentCultureIgnoreCase) != -1)
-                    results.Add(keyphrases[i], true);
+                    results.Add(keyphrases[i], "true");
                 else
-                    results.Add(keyphrases[i], false);
+                    results.Add(keyphrases[i], "false");
             }
             Console.WriteLine("parseLogcat: ENDED");
             return results;
