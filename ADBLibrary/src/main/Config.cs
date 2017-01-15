@@ -15,5 +15,6 @@ namespace main
         public String logcat_timeout { get; set; }
         public List<string> android_vm_antivirus_keywords { get; set; }
         public List<string> android_vm_antivirus_app { get; set; }
+        public String email_notify_addr { get; set; }
     }
 }

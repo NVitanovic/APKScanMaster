@@ -185,6 +185,7 @@ namespace ADBLibrary
             catch (Exception e)
             {
                 Console.WriteLine("Exception: " + e);
+                Console.WriteLine(e.StackTrace);
                 return INVALID_APK;
             }
         }

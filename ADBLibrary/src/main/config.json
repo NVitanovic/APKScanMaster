@@ -36,5 +36,6 @@
     "com.cleanmaster.security",
     "com.bitdefender.antivirus",
     "org.malwarebytes.antimalware"
-  ]
+  ],
+  "email_notify_addr" : "ivankoma@outlook.com"
 }

@@ -17,7 +17,9 @@ namespace main
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 26");
-                   
+
+            ExceptionNotifier.SendEmail("apkscan.online MASTER started " + DateTime.Now, config.email_notify_addr);
+            /*      
             connectToAllAndroidVM();
 
             ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
@@ -27,7 +29,7 @@ namespace main
             //downloadFile("http://www.cigani.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
             //downloadFile("http://www.cdfgdfgdfgdfgdfgdfgdfgdgi.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
             //downloadFile("http://www.cigani.xyz/1", "vpn.jpg", ".jpg", "TESTDL2");
-
+            */
             Console.WriteLine("END MAIN");
             Console.ReadLine();
         }
@@ -75,6 +77,13 @@ namespace main
                             catch(Exception e)
                             {
                                 Console.WriteLine(e.StackTrace);
+                                ExceptionNotifier.SendEmail(
+                                    "StackTrace:\n" + e.StackTrace +
+                                    "\nData" + e.Data +
+                                    "\nMessage" + e.Message +
+                                    "\nSource" + e.Source +
+                                    "\nInnerException" + e.InnerException, config.email_notify_addr
+                                    );
                             }
                         }
                     });
@@ -126,7 +135,7 @@ namespace main
         {
             try
             {
-                Console.WriteLine("Poceo skidanje fajla.");
+                Console.WriteLine("downloadFile: started");
                 HttpClient client = new HttpClient();
                 client.BaseAddress = new Uri(uri);
                 client.Timeout = TimeSpan.FromMinutes(5);
@@ -156,7 +165,7 @@ namespace main
                     httpStream.Result.CopyTo(fileStream);
                     fileStream.Flush();
                     fileStream.Dispose();
-                    Console.WriteLine("Zavrsio skidanje fajla.");
+                    Console.WriteLine("downloadFile: ended");
                     return true;
                 }
             }
