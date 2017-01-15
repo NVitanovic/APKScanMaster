@@ -17,19 +17,48 @@ namespace main
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 26");
+            Config config = configuration("config.json");
+            ADBLibrary.ADBClient.logcatTimeout = int.Parse(config.android_vm_wait_time);
+            Console.WriteLine("pre sendEmail");
+            Thread t = new Thread(() =>
+            {
+                EmailNotify.SendEmail(config, "Program started at " + DateTime.Now);
+            });
+            t.Start();
+            Console.WriteLine("posle sendEmail");
 
-            ExceptionNotifier.SendEmail("apkscan.online MASTER started " + DateTime.Now, config.email_notify_addr);
-            /*      
-            connectToAllAndroidVM();
+            try{
+                connectToAllAndroidVM();
+            }
+            catch (Exception e){
+                Console.WriteLine(e.StackTrace);
+                Thread tt = new Thread(() =>
+                {
+                    EmailNotify.SendEmail(config,"StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
+                });
+                tt.Start();
+            }
 
-            ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
-            IDatabase db1 = redis1.GetDatabase();
-            ISubscriber sub = redis1.GetSubscriber();
-            redisSubscribe(db1, sub);
+            try
+            {
+                ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
+                IDatabase db1 = redis1.GetDatabase();
+                ISubscriber sub = redis1.GetSubscriber();
+                redisSubscribe(db1, sub);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.StackTrace);
+                Thread tt = new Thread(() =>
+                {
+                    EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
+                });
+                tt.Start();
+            }
             //downloadFile("http://www.cigani.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
             //downloadFile("http://www.cdfgdfgdfgdfgdfgdfgdfgdgi.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
             //downloadFile("http://www.cigani.xyz/1", "vpn.jpg", ".jpg", "TESTDL2");
-            */
+
             Console.WriteLine("END MAIN");
             Console.ReadLine();
         }
@@ -71,20 +100,20 @@ namespace main
                                     result.filename = data.filename;
                                     Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
                                     Console.WriteLine(sub.Publish("receive", "x"));
-                                    Console.WriteLine("***********************************\n\n");
+                                    Console.WriteLine("Returning to 'receive' redis queue:\n" + JsonConvert.SerializeObject(result));
                                 }
                             }
                             catch(Exception e)
                             {
                                 Console.WriteLine(e.StackTrace);
-                                ExceptionNotifier.SendEmail(
-                                    "StackTrace:\n" + e.StackTrace +
-                                    "\nData" + e.Data +
-                                    "\nMessage" + e.Message +
-                                    "\nSource" + e.Source +
-                                    "\nInnerException" + e.InnerException, config.email_notify_addr
-                                    );
+                                Thread t = new Thread(() =>
+                                {
+                                    EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
+                                });
+                                t.Start();
+                                
                             }
+                            Console.WriteLine("***********************************\n\n");
                         }
                     });
                     Thread.Sleep(100);
@@ -172,6 +201,10 @@ namespace main
             catch(Exception e)
             {
                 Console.WriteLine(e.StackTrace);
+                Thread t = new Thread(() =>
+                {
+                    EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
+                });
                 return false;
             }
            

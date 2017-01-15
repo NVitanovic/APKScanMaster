@@ -15,9 +15,8 @@
     "192.168.4.102:5556",
     "192.168.4.101:5556"
   ],
-  "download_server": "http://192.168.4.20/download/",
-  "android_vm_wait_time": "60",
-  "logcat_timeout": "60",
+  "download_server": "http://www.cigani.xyz/1/",
+  "android_vm_wait_time": "30",
   "download_location": "/home/koma/koma/",
   "android_vm_antivirus_keywords": [
     "virus",
@@ -37,5 +36,15 @@
     "com.bitdefender.antivirus",
     "org.malwarebytes.antimalware"
   ],
-  "email_notify_addr" : "ivankoma@outlook.com"
+  "email": {
+      "from_email_addr": "exceptionreport@outlook.com",
+      "to_email_addr": "exceptionreport@outlook.com",
+      "from_mailbox_name": "Exception/Error",
+      "to_mailbox_name": "Exception/Error",
+      "subject": "apkscan.online ",
+      "client_connect": "smtp-mail.outlook.com",
+      "client_port": "587",
+      "client_authenticate_username": "exceptionreport@outlook.com",
+      "client_authenticate_password": "apkscan.online"
+  }
 }

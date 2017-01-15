@@ -22,7 +22,7 @@ namespace ADBLibrary
             set { logcatTimeout = value; }
         }
 
-        public ADBClient(int logcatTimeout = 45)
+        public ADBClient(int logcatTimeout)
         {
             devices = new List<ADBDevice>();
             ADBClient.logcatTimeout = logcatTimeout;
@@ -186,6 +186,7 @@ namespace ADBLibrary
             {
                 Console.WriteLine("Exception: " + e);
                 Console.WriteLine(e.StackTrace);
+                //TODO: send email
                 return INVALID_APK;
             }
         }
