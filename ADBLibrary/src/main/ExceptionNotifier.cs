@@ -35,9 +35,9 @@ namespace main
 
                 // Note: only needed if the SMTP server requires authentication
                 client.Authenticate(config.email.client_authenticate_username, config.email.client_authenticate_password);
-                Console.WriteLine("pre send");
+                
                 client.Send(message);
-                Console.WriteLine("posle send");
+                Console.WriteLine("Email sent.");
                 //TODO: treba da se proveri da li se mail stvarno poslao.
                 //event handler mora da se napravi http://www.mimekit.org/docs/html/E_MailKit_MailTransport_MessageSent.htm
                 client.Disconnect(true);

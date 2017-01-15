@@ -11,7 +11,7 @@ namespace ADBLibrary
     {
         public static List<ADBDevice> devices;
         public static int logcatTimeout = 45;
-        public static String INVALID_APK = "0 error";
+        public static String INVALID_APK = "File doesn't have package!";
         public static void Main()
         {
         }
@@ -100,7 +100,7 @@ namespace ADBLibrary
             return results;
         }
 
-        private static Process runADB(String ipport, String args, bool killIfLogcat)
+        public static Process runADB(String ipport, String args, bool killIfLogcat)
         {
             String arguments = "";
             if (ipport != "")

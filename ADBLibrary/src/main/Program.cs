@@ -12,21 +12,20 @@ namespace main
 {
     public class Program
     {
-        public static String INVALID_APK = "0 error";
+        public static String INVALID_APK = "File doesn't have package!";
         public static Config config = configuration("config.json");
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 26");
             Config config = configuration("config.json");
             ADBLibrary.ADBClient.logcatTimeout = int.Parse(config.android_vm_wait_time);
-            Console.WriteLine("pre sendEmail");
+            
             Thread t = new Thread(() =>
             {
                 EmailNotify.SendEmail(config, "Program started at " + DateTime.Now);
             });
             t.Start();
-            Console.WriteLine("posle sendEmail");
-
+            
             try{
                 connectToAllAndroidVM();
             }
@@ -65,6 +64,7 @@ namespace main
 
         public static void redisSubscribe(IDatabase db1, ISubscriber sub)
         {
+            String packageName;
             Console.WriteLine("thread redisSubscribe started");
             //Thread t = new Thread(()  => {
                 while (true)
@@ -79,28 +79,46 @@ namespace main
                             {
                                 RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
                                 Console.WriteLine("upload IP je " + data.upload_ip);
-                                downloadFile(config.download_server, data.hash, ".apk" ,config.download_location);//super 1337 hax to find file extension
-                                //check if file is really .apk
-                                ADBLibrary.ADBClient.clearLogcat(config.android_vm[1]);
-                                if (ADBLibrary.ADBClient.installApk(config.android_vm[1], config.download_location + data.hash + ".apk"))
+                                downloadFile(config.download_server, data.hash, ".apk" ,config.download_location);
+                                packageName = ADBLibrary.ADBClient.getPackageNameFromApk(config.download_location + data.hash + ".apk");
+                                if ((packageName + data.hash + ".apk") == INVALID_APK)
                                 {
-                                    RedisReceive result = new RedisReceive();
-                                    Dictionary<String, String> results = ADBLibrary.ADBClient.parseLogcat(config.android_vm[1],config.android_vm_antivirus_keywords.ToArray());
-                                    
-                                    for (int i = 0; i < results.Count; i++)
+                                    Console.WriteLine("Invalid .apk");
+                                    Thread tt = new Thread(() =>
                                     {
-                                        Console.WriteLine("[" + config.android_vm_antivirus_app[i] + "] says that file is a virus " + results[config.android_vm_antivirus_keywords[i]]);
-                                        result.av_results.Add(config.android_vm_antivirus_app[i], results[config.android_vm_antivirus_keywords[i]]);
-                                    }
+                                        EmailNotify.SendEmail(config, "User: " + data.upload_ip + "\nat: " + data.upload_date + "\ntried to upload invalid file: " + data.hash);
+                                    });
+                                    tt.Start();
+                                }
+                                else
+                                {
+                                    connectToAllAndroidVM();    //after reset/snapshot master needs to ADB connect to all devices again
+                                    String currentVM = config.android_vm[1];
+                                    ADBLibrary.ADBClient.clearLogcat(currentVM);
+                                    if (ADBLibrary.ADBClient.installApk(currentVM, config.download_location + data.hash + ".apk"))
+                                    {
+                                        RedisReceive result = new RedisReceive();
+                                        Dictionary<String, String> results = ADBLibrary.ADBClient.parseLogcat(currentVM, config.android_vm_antivirus_keywords.ToArray());
 
-                                    result.master_id = "master1";
-                                    result.hash = data.hash;
-                                    result.upload_date = data.upload_date;
-                                    result.upload_ip = data.upload_ip;
-                                    result.filename = data.filename;
-                                    Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
-                                    Console.WriteLine(sub.Publish("receive", "x"));
-                                    Console.WriteLine("Returning to 'receive' redis queue:\n" + JsonConvert.SerializeObject(result));
+                                        for (int i = 0; i < results.Count; i++)
+                                        {
+                                            Console.WriteLine("[" + config.android_vm_antivirus_app[i] + "] says that file is a virus " + results[config.android_vm_antivirus_keywords[i]]);
+                                            result.av_results.Add(config.android_vm_antivirus_app[i], results[config.android_vm_antivirus_keywords[i]]);
+                                        }
+                                        //reset machine via proxmox api
+                                        ADBLibrary.ADBClient.unInstallApk(currentVM,packageName);
+                                        ADBLibrary.ADBClient.runADB(currentVM, "reboot", false);
+                                        //^ this is temporary
+                                        result.master_id = "master1";
+                                        result.hash = data.hash;
+                                        result.upload_date = data.upload_date;
+                                        result.upload_ip = data.upload_ip;
+                                        result.filename = data.filename;
+                                        Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
+                                        Console.WriteLine(sub.Publish("receive", "x"));
+                                        Console.WriteLine("Returning to 'receive' redis queue:\n" + JsonConvert.SerializeObject(result));
+                                        File.Delete(config.download_location + data.hash + ".apk");
+                                    }
                                 }
                             }
                             catch(Exception e)
