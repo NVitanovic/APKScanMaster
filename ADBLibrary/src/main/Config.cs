@@ -11,7 +11,8 @@ namespace main
     {
         public List<string> android_vm { get; set; }
         public String download_server { get; set; }
-        public String android_vm_wait_time { get; set; }
+        public String android_vm_wait_time_reboot { get; set; }
+        public String logcat_wait { get; set; }
         public String download_location { get; set; }
         public List<string> android_vm_antivirus_keywords { get; set; }
         public List<string> android_vm_antivirus_app { get; set; }

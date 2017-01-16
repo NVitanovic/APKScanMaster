@@ -14,15 +14,27 @@ namespace main
     {
         public static String INVALID_APK = "File doesn't have package!";
         public static Config config = configuration("config.json");
+        public static bool[] androidVMavailable;
+        public static int[] androidVMtimeWhenAvailable;
+        public static RedisSend data;
         public static void Main(string[] args)
         {
-            Console.WriteLine("STARTED VERSION: 26");
+            Console.WriteLine("STARTED VERSION: 31");
             Config config = configuration("config.json");
-            ADBLibrary.ADBClient.logcatTimeout = int.Parse(config.android_vm_wait_time);
+
+            androidVMavailable = new bool[config.android_vm.Count];
+            androidVMtimeWhenAvailable = new int[config.android_vm.Count];
+            for (int i = 0; i < config.android_vm.Count; i++)
+            {
+                androidVMavailable[i] = true;
+                androidVMtimeWhenAvailable[i] = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            }
+
+            ADBLibrary.ADBClient.logcatTimeout = int.Parse(config.logcat_wait);
             
             Thread t = new Thread(() =>
             {
-                EmailNotify.SendEmail(config, "Program started at " + DateTime.Now);
+                //EmailNotify.SendEmail(config, "Program started at " + DateTime.Now);
             });
             t.Start();
             
@@ -65,6 +77,7 @@ namespace main
         public static void redisSubscribe(IDatabase db1, ISubscriber sub)
         {
             String packageName;
+            
             Console.WriteLine("thread redisSubscribe started");
             //Thread t = new Thread(()  => {
                 while (true)
@@ -77,7 +90,7 @@ namespace main
                             Console.WriteLine((string)work);
                             try
                             {
-                                RedisSend data = JsonConvert.DeserializeObject<RedisSend>(work);
+                                data = JsonConvert.DeserializeObject<RedisSend>(work);
                                 Console.WriteLine("upload IP je " + data.upload_ip);
                                 downloadFile(config.download_server, data.hash, ".apk" ,config.download_location);
                                 packageName = ADBLibrary.ADBClient.getPackageNameFromApk(config.download_location + data.hash + ".apk");
@@ -92,33 +105,34 @@ namespace main
                                 }
                                 else
                                 {
-                                    connectToAllAndroidVM();    //after reset/snapshot master needs to ADB connect to all devices again
-                                    String currentVM = config.android_vm[1];
-                                    ADBLibrary.ADBClient.clearLogcat(currentVM);
-                                    if (ADBLibrary.ADBClient.installApk(currentVM, config.download_location + data.hash + ".apk"))
+                                        
+                                    String currentVM;
+                                    bool processingRequest = false;
+                                    /////////////////////////
+                                    while (!processingRequest)
                                     {
-                                        RedisReceive result = new RedisReceive();
-                                        Dictionary<String, String> results = ADBLibrary.ADBClient.parseLogcat(currentVM, config.android_vm_antivirus_keywords.ToArray());
-
-                                        for (int i = 0; i < results.Count; i++)
+                                        for (int i = 0; i < config.android_vm.Count; i++)
                                         {
-                                            Console.WriteLine("[" + config.android_vm_antivirus_app[i] + "] says that file is a virus " + results[config.android_vm_antivirus_keywords[i]]);
-                                            result.av_results.Add(config.android_vm_antivirus_app[i], results[config.android_vm_antivirus_keywords[i]]);
+
+                                            if (androidVMavailable[i])
+                                            {
+                                                connectToAllAndroidVM(); //after reset/snapshot master needs to ADB connect to all devices again
+                                                currentVM = config.android_vm[i];
+                                                androidVMavailable[i] = false;
+                                                Console.WriteLine(i + " is available " + config.android_vm[i]);
+                                                Thread processApk = new Thread(() =>
+                                                {
+                                                    processingRequest = true;
+                                                    Console.WriteLine(i + " started processing apk in " + config.android_vm[i]);
+                                                    processApkInVM(db1, sub, packageName, currentVM, i);
+                                                    Console.WriteLine(i + " ended processing apk in " + config.android_vm[i]);
+                                                });
+                                                processApk.Start();
+
+                                            }
                                         }
-                                        //reset machine via proxmox api
-                                        ADBLibrary.ADBClient.unInstallApk(currentVM,packageName);
-                                        ADBLibrary.ADBClient.runADB(currentVM, "reboot", false);
-                                        //^ this is temporary
-                                        result.master_id = "master1";
-                                        result.hash = data.hash;
-                                        result.upload_date = data.upload_date;
-                                        result.upload_ip = data.upload_ip;
-                                        result.filename = data.filename;
-                                        Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
-                                        Console.WriteLine(sub.Publish("receive", "x"));
-                                        Console.WriteLine("Returning to 'receive' redis queue:\n" + JsonConvert.SerializeObject(result));
-                                        File.Delete(config.download_location + data.hash + ".apk");
                                     }
+                                    
                                 }
                             }
                             catch(Exception e)
@@ -138,6 +152,44 @@ namespace main
                 }
             //});
             //t.Start();
+        }
+
+        private static void processApkInVM(IDatabase db1, ISubscriber sub, string packageName, string currentVM, int i)
+        {
+            Console.WriteLine("processApkInVM started");
+            Console.WriteLine("currentVM: " + currentVM);
+            //connectToAllAndroidVM();
+            ADBLibrary.ADBClient.clearLogcat(currentVM);
+            if (ADBLibrary.ADBClient.installApk(currentVM, config.download_location + data.hash + ".apk"))
+            {
+                RedisReceive result = new RedisReceive();
+                Dictionary<String, String> results = ADBLibrary.ADBClient.parseLogcat(currentVM, config.android_vm_antivirus_keywords.ToArray());
+
+                for (int j = 0; j < results.Count; j++)
+                {
+                    Console.WriteLine("[" + config.android_vm_antivirus_app[j] + "] says that file is a virus " + results[config.android_vm_antivirus_keywords[j]]);
+                    result.av_results.Add(config.android_vm_antivirus_app[j], results[config.android_vm_antivirus_keywords[j]]);
+                }
+                //reset machine via proxmox api
+                ADBLibrary.ADBClient.unInstallApk(currentVM, packageName);
+                ADBLibrary.ADBClient.runADB(currentVM, "reboot", false);
+                
+                //^ this is temporary
+                //////////////////////////////
+                result.master_id = "master1";
+                result.hash = data.hash;
+                result.upload_date = data.upload_date;
+                result.upload_ip = data.upload_ip;
+                result.filename = data.filename;
+                Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
+                Console.WriteLine(sub.Publish("receive", "x"));
+                Console.WriteLine("Returning to 'receive' redis queue:\n" + JsonConvert.SerializeObject(result));
+                File.Delete(config.download_location + data.hash + ".apk");
+                Thread.Sleep(int.Parse(config.android_vm_wait_time_reboot) * 1000);
+                ADBLibrary.ADBClient.connectToDevice(currentVM);
+                androidVMavailable[i] = true;
+                Console.WriteLine("processApkInVM ended");
+            }
         }
 
         public static Config configuration(String path)
@@ -172,7 +224,9 @@ namespace main
 
         public static void connectToAllAndroidVM()
         {
-            foreach(String ip in config.android_vm)
+            //ADBLibrary.ADBClient.runADB("", "kill-server", false);
+            ADBLibrary.ADBClient.runADB("", "start-server", false);
+            foreach (String ip in config.android_vm)
             {
                 ADBLibrary.ADBClient.connectToDevice(ip);
             }

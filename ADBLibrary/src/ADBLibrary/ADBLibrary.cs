@@ -59,6 +59,7 @@ namespace ADBLibrary
             {
                 Console.WriteLine("Can't connect to " + ip);
             }
+            Console.WriteLine("Connecting to " + ip + " result: " + result);
         }
 
         public static void clearLogcat(String ipport)
