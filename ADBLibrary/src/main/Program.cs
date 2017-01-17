@@ -23,6 +23,7 @@ namespace main
         public static int brojReq = 0;
         public static List<string> queue;
         public static Object lockObj = new Object();
+        public static int brojObradjenih = 0;//za testiranje
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 32");
@@ -165,6 +166,8 @@ namespace main
                                                     {
                                                         brojReq--;
                                                         androidVMavailable[vmPosition] = true;
+                                                        brojObradjenih++;
+                                                        Console.WriteLine("Broj obradjenih zahteva: " + brojObradjenih.ToString());
                                                     }
                                                     Console.WriteLine("br requesta nakon pozivanja processAPK " + brojReq);
                                                     if (brojReq < config.android_vm.Count)
@@ -177,7 +180,7 @@ namespace main
                                                     Console.WriteLine("***********************************\n\n");
                                                 });
                                                 processApk.Start();
-                                                Thread.Sleep(1000);
+                                                //Thread.Sleep(1000);
                                             }
                                         }
                                     }
@@ -245,7 +248,7 @@ namespace main
             
             //Thread.CurrentThread.Sleep(int.Parse(config.android_vm_wait_time_reboot) * 1000);
             Console.WriteLine("pre stopwatch");
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            /*Stopwatch stopwatch = Stopwatch.StartNew();
             while (true)
             {
                 //some other processing to do possible
@@ -253,7 +256,8 @@ namespace main
                 {
                     break;
                 }
-            }
+            }*/
+            Thread.Sleep(5000);
             Console.WriteLine("posle stopwatch");
             Console.WriteLine("currentVM: " + currentVM);
             Console.Write("Ended processing hash ");
