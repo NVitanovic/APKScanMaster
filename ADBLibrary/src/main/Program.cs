@@ -19,8 +19,9 @@ namespace main
         public static int[] androidVMtimeWhenAvailable;
         public static RedisSend data;
         public static int vmPosition=0;
-        public static Object locker = new Object();
-        public static ReaderWriterLockSlim magic = new ReaderWriterLockSlim();
+        public static bool zauzet = false;
+        public static int brojReq = 0;
+        public static List<string> queue;
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 32");
@@ -82,99 +83,114 @@ namespace main
         public static void redisSubscribe(IDatabase db1, ISubscriber sub)
         {
             String packageName;
-            
-            Console.WriteLine("thread redisSubscribe started");
+            writeLineColored("\nthread redisSubscribe started", ConsoleColor.Magenta);
             //Thread t = new Thread(()  => {
-                while (true)
-                {
-                    sub.Subscribe("send", (channel, message) =>
+                //while (true)
+                //{
+                
+                sub.Subscribe("send", (channel, message) =>
                     {
-                        
-                        string work = db1.ListRightPop("send");
-                        if (work != null)
+                        while (true)
                         {
-                            Console.WriteLine((string)work);
-                            try
+                            //Console.WriteLine("Desio se publish. Zauzet je ");
+                            //writeLineColored(zauzet.ToString(), ConsoleColor.Cyan);
+                            if (!zauzet)
                             {
-                                data = JsonConvert.DeserializeObject<RedisSend>(work);
-                                Console.WriteLine("upload IP je " + data.upload_ip);
-                                //downloadFile(config.download_server, data.hash, ".apk" ,config.download_location);
-                                //packageName = ADBLibrary.ADBClient.getPackageNameFromApk(config.download_location + data.hash + ".apk");
-                                packageName = "com.google";
-                                if (packageName == INVALID_APK)
+                                if (brojReq >= config.android_vm.Count)
                                 {
-                                    Console.WriteLine("Invalid .apk");
-                                    Thread tt = new Thread(() =>
-                                    {
-                                        EmailNotify.SendEmail(config, "User: " + data.upload_ip + "\nat: " + data.upload_date + "\ntried to upload invalid file: " + data.hash);
-                                    });
-                                    tt.Start();
+                                    zauzet = true;
+                                    writeLineColored("Zauzeto.", ConsoleColor.Red);
+                                    continue;
                                 }
-                                else
-                                {
-                                    Console.WriteLine("x");
-                                    String currentVM;
-                                    
-                                    
-                                        //for (int i = 0; i < config.android_vm.Count; i++)
-                                        //{
-                                        Console.ForegroundColor = ConsoleColor.Cyan;
-                                        Console.WriteLine("\n==============================");
-                                        Console.ResetColor();
-                                        Console.WriteLine("vmPosition=" + vmPosition);
-
-                                        //magic.EnterReadLock();
-                                        
-                                        if (androidVMavailable[vmPosition])
-                                        {
-                                            androidVMavailable[vmPosition] = false;
-                                            //connectToAllAndroidVM(); //after reset/snapshot master needs to ADB connect to all devices again                                           
-                                            currentVM = config.android_vm[vmPosition];                                   
-                                            Console.WriteLine(vmPosition + " is available " + config.android_vm[vmPosition]);
-                                            Console.WriteLine(vmPosition + " started processing apk in " + config.android_vm[vmPosition]);
-                                            Thread processApk = new Thread(() =>
-                                            {
-                                                vmPosition++;
-                                                if (vmPosition == config.android_vm.Count)
-                                                {
-                                                    vmPosition = 0;
-                                                }
-                                                processApkInVM(db1, sub, packageName, currentVM, vmPosition==0?0:vmPosition-1);
-                                                Console.WriteLine(vmPosition + " ended processing apk in " + config.android_vm[vmPosition]);
-                                                Console.WriteLine("***********************************\n\n");
-                                            });
-                                            processApk.Start();
-                                        
-                                        }
-                                }
-                            }
-                            catch(Exception e)
-                            {
-                                Console.WriteLine(e.StackTrace);
-                                Thread t = new Thread(() =>
-                                {
-                                    EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
-                                });
-                                t.Start();
+                                string work = db1.ListRightPop("send");
                                 
+                                if (work != null)
+                                {
+                                    brojReq++;
+                                    Console.WriteLine((string)work);
+                                    Console.WriteLine("brojReq nakon pop je " + brojReq);
+                                    try
+                                    {
+                                        data = JsonConvert.DeserializeObject<RedisSend>(work);
+                                        //if (data != null)
+                                            //brojReq++;
+                                        
+                                        //downloadFile(config.download_server, data.hash, ".apk" ,config.download_location);
+                                        //packageName = ADBLibrary.ADBClient.getPackageNameFromApk(config.download_location + data.hash + ".apk");
+                                        packageName = "com.google";
+                                        if (packageName == INVALID_APK)
+                                        {
+                                            Console.WriteLine("Invalid .apk");
+                                            Thread tt = new Thread(() =>
+                                            {
+                                                EmailNotify.SendEmail(config, "User: " + data.upload_ip + "\nat: " + data.upload_date + "\ntried to upload invalid file: " + data.hash);
+                                            });
+                                            tt.Start();
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("x");
+                                            String currentVM;
+
+                                            //for (int i = 0; i < config.android_vm.Count; i++)
+                                            //{
+                                            writeLineColored("\n==============================", ConsoleColor.DarkCyan);
+                                            Console.WriteLine("vmPosition=" + vmPosition);
+                                            if (androidVMavailable[vmPosition])
+                                            {
+                                                androidVMavailable[vmPosition] = false;
+                                                //connectToAllAndroidVM(); //after reset/snapshot master needs to ADB connect to all devices again                                           
+                                                currentVM = config.android_vm[vmPosition];
+                                                Console.WriteLine(vmPosition + " is available " + config.android_vm[vmPosition]);
+                                                Console.WriteLine(vmPosition + " started processing apk in " + config.android_vm[vmPosition]);
+                                                Thread processApk = new Thread(() =>
+                                                {
+                                                    vmPosition++;
+                                                    if (vmPosition == config.android_vm.Count)
+                                                    {
+                                                        vmPosition = 0;
+                                                    }
+                                                    processApkInVM(db1, sub, data.hash, packageName, currentVM, vmPosition == 0 ? 0 : vmPosition - 1);
+                                                    brojReq--;
+                                                    Console.WriteLine("br requesta nakon pozivanja processAPK " + brojReq);
+                                                    if (brojReq < config.android_vm.Count)
+                                                    {
+                                                        zauzet = false;
+                                                    }
+                                                    Console.WriteLine("***********************************\n\n");
+                                                });
+                                                processApk.Start();
+
+                                            }
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine(e.StackTrace);
+                                        Thread t = new Thread(() =>
+                                        {
+                                            EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
+                                        });
+                                        t.Start();
+                                    }
+                                }
                             }
-                            
                         }
                     });
-                    Thread.Sleep(100);
-                }
+                    //Thread.Sleep(1000);
+                //}
             //});
             //t.Start();
         }
 
-        private static void processApkInVM(IDatabase db1, ISubscriber sub, string packageName, string currentVM, int i)
+        private static void processApkInVM(IDatabase db1, ISubscriber sub, string hash, string packageName, string currentVM, int i)
         {
             Console.WriteLine("processApkInVM started");
             Console.WriteLine("currentVM: " + currentVM);
             /*
             //connectToAllAndroidVM();
             ADBLibrary.ADBClient.clearLogcat(currentVM);
-            if (ADBLibrary.ADBClient.installApk(currentVM, config.download_location + data.hash + ".apk"))
+            if (ADBLibrary.ADBClient.installApk(currentVM, config.download_location + hash + ".apk"))
             {
                 RedisReceive result = new RedisReceive();
                 Dictionary<String, String> results = ADBLibrary.ADBClient.parseLogcat(currentVM, config.android_vm_antivirus_keywords.ToArray());
@@ -222,6 +238,9 @@ namespace main
                 }
             }
             Console.WriteLine("posle stopwatch");
+            Console.WriteLine("currentVM: " + currentVM);
+            Console.Write("Ended processing hash ");
+            writeLineColored(hash, ConsoleColor.Red);
         }
 
         public static Config configuration(String path)
@@ -314,6 +333,13 @@ namespace main
            
             
 
+        }
+
+        public static void writeLineColored(String message, ConsoleColor color)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(message);
+            Console.ResetColor();
         }
     }
 }
