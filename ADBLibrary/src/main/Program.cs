@@ -22,6 +22,7 @@ namespace main
         public static bool zauzet = false;
         public static int brojReq = 0;
         public static List<string> queue;
+        public static Object lockObj = new Object();
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 32");
@@ -98,7 +99,10 @@ namespace main
                             {
                                 if (brojReq >= config.android_vm.Count)
                                 {
-                                    zauzet = true;
+                                    lock (lockObj)
+                                    {
+                                        zauzet = true;
+                                    }
                                     writeLineColored("Zauzeto.", ConsoleColor.Red);
                                     continue;
                                 }
@@ -106,7 +110,10 @@ namespace main
                                 
                                 if (work != null)
                                 {
-                                    brojReq++;
+                                    lock (lockObj)
+                                    {
+                                        brojReq++;
+                                    }
                                     Console.WriteLine((string)work);
                                     Console.WriteLine("brojReq nakon pop je " + brojReq);
                                     try
@@ -145,22 +152,32 @@ namespace main
                                                 Console.WriteLine(vmPosition + " started processing apk in " + config.android_vm[vmPosition]);
                                                 Thread processApk = new Thread(() =>
                                                 {
-                                                    vmPosition++;
-                                                    if (vmPosition == config.android_vm.Count)
+                                                    lock (lockObj)
                                                     {
-                                                        vmPosition = 0;
+                                                        vmPosition++;
+                                                        if (vmPosition == config.android_vm.Count)
+                                                        {
+                                                            vmPosition = 0;
+                                                        }
                                                     }
                                                     processApkInVM(db1, sub, data.hash, packageName, currentVM, vmPosition == 0 ? 0 : vmPosition - 1);
-                                                    brojReq--;
+                                                    lock (lockObj)
+                                                    {
+                                                        brojReq--;
+                                                        androidVMavailable[vmPosition] = true;
+                                                    }
                                                     Console.WriteLine("br requesta nakon pozivanja processAPK " + brojReq);
                                                     if (brojReq < config.android_vm.Count)
                                                     {
-                                                        zauzet = false;
+                                                        lock (lockObj)
+                                                        {
+                                                            zauzet = false;
+                                                        }
                                                     }
                                                     Console.WriteLine("***********************************\n\n");
                                                 });
                                                 processApk.Start();
-
+                                                Thread.Sleep(1000);
                                             }
                                         }
                                     }
@@ -225,7 +242,7 @@ namespace main
                 Console.WriteLine("processApkInVM ended");
             }
             */
-            androidVMavailable[i] = true;
+            
             //Thread.CurrentThread.Sleep(int.Parse(config.android_vm_wait_time_reboot) * 1000);
             Console.WriteLine("pre stopwatch");
             Stopwatch stopwatch = Stopwatch.StartNew();
