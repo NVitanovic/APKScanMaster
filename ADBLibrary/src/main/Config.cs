@@ -19,5 +19,6 @@ namespace main
         public ConfigEmail email { get; set; }
         public master master { get; set; }
         public List<AndroidVM> AndroidVM { get; set; }
+        public String proxmox_channel { get; set; }
     }
 }

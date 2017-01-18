@@ -31,8 +31,9 @@
     "master_id": "master01",
     "auth": "password1"
   },
+  "proxmox_channel": "proxmoxapi",
   "download_server": "http://www.cigani.xyz/1/",
-  "android_vm_wait_time_reboot": "30",
+  "android_vm_wait_time_reboot": "15",
   "logcat_wait": "5",
   "download_location": "/home/koma/koma/",
   "android_vm_antivirus_keywords": [

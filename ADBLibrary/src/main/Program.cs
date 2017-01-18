@@ -26,7 +26,7 @@ namespace main
         public static int brojObradjenih = 0;//za testiranje
         public static void Main(string[] args)
         {
-            Console.WriteLine("STARTED VERSION: 32");
+            Console.WriteLine("STARTED VERSION: 33");
             //Config config = configuration("config.json");
 
             androidVMavailable = new bool[config.AndroidVM.Count];
@@ -61,8 +61,8 @@ namespace main
 
             try
             {
-                ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("localhost");
-                //ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
+                //ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("localhost");
+                ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
                 IDatabase db1 = redis1.GetDatabase();
                 ISubscriber sub = redis1.GetSubscriber();
                 redisSubscribe(db1, sub);
@@ -207,21 +207,45 @@ namespace main
                 Console.WriteLine("processApkInVM ended");
             }
             */
+
             //PROXMOX
-            /*
             RedisProxmox resetRequest = new RedisProxmox();
             resetRequest.task = eTask.rollbackSnapshot;
-            resetRequest.vm_id = "105";
+            resetRequest.vm_id = findVMid(currentVM);
             resetRequest.auth = config.master.auth;
             resetRequest.master_id = config.master.master_id;
-            */
-            Console.WriteLine("pre stopwatch");
 
-            Thread.Sleep(5000);
+            writeLineColored(config.proxmox_channel, ConsoleColor.Red);
+            writeLineColored(JsonConvert.SerializeObject(resetRequest), ConsoleColor.Green);
+
+            ADBLibrary.ADBClient.runADB(currentVM, "disconnect", false);
+
+            db1.ListLeftPush(config.proxmox_channel, JsonConvert.SerializeObject(resetRequest));
+            sub.Publish(config.proxmox_channel, config.proxmox_channel);
+
+            Console.WriteLine("pre stopwatch");
+            Thread.Sleep(Int32.Parse(config.android_vm_wait_time_reboot) * 1000);
             Console.WriteLine("posle stopwatch");
             Console.WriteLine("currentVM: " + currentVM);
             Console.Write("Ended processing hash ");
             writeLineColored(hash, ConsoleColor.Red);
+
+            ADBLibrary.ADBClient.connectToDevice(currentVM);
+        }
+
+        private static String findVMid(String currentVM)
+        {
+            String result = null;
+
+            for (int i = 0; i < config.AndroidVM.Count; i++)
+            {
+                if (config.AndroidVM[i].android_vm == currentVM)
+                {
+                    result = config.AndroidVM[i].android_vm_id;
+                    break;
+                }
+            }
+            return result;
         }
 
         public static Config configuration(String path)
