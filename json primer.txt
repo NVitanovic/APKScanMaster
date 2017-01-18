@@ -8,4 +8,4 @@ Send hash:
 }
 
 
-{"hash":"323523532","filename":"test.apk","upload_ip":"192.168.1.100","upload_date":"130120172030"}
+{"hash":"323523532","filename":"test.apk","upload_ip":"192.168.1.100","upload_date":"3/15/2008"}
