@@ -9,15 +9,31 @@
     "192.168.4.212:7000",
     "192.168.4.213:7000"
   ],
-  "android_vm": [
-    "192.168.4.101:5556",
-    "192.168.4.102:5556",
-    "192.168.4.103:5556",
-    "192.168.4.12:5556"
+  "AndroidVM": [
+    {
+      "android_vm": "192.168.4.101:5556",
+      "android_vm_id": "105"
+    },
+    {
+      "android_vm": "192.168.4.102:5556",
+      "android_vm_id": "115"
+    },
+    {
+      "android_vm": "192.168.4.103:5556",
+      "android_vm_id": "116"
+    },
+    {
+      "android_vm": "192.168.4.12:5556",
+      "android_vm_id": "117"
+    }
   ],
+  "master": {
+    "master_id": "master01",
+    "auth": "password1"
+  },
   "download_server": "http://www.cigani.xyz/1/",
   "android_vm_wait_time_reboot": "30",
-  "logcat_wait" : "5",
+  "logcat_wait": "5",
   "download_location": "/home/koma/koma/",
   "android_vm_antivirus_keywords": [
     "virus",
@@ -38,14 +54,14 @@
     "org.malwarebytes.antimalware"
   ],
   "email": {
-      "from_email_addr": "exceptionreport@outlook.com",
-      "to_email_addr": "exceptionreport@outlook.com",
-      "from_mailbox_name": "Exception/Error",
-      "to_mailbox_name": "Exception/Error",
-      "subject": "apkscan.online ",
-      "client_connect": "smtp-mail.outlook.com",
-      "client_port": "587",
-      "client_authenticate_username": "exceptionreport@outlook.com",
-      "client_authenticate_password": "apkscan.online"
+    "from_email_addr": "exceptionreport@outlook.com",
+    "to_email_addr": "exceptionreport@outlook.com",
+    "from_mailbox_name": "Exception/Error",
+    "to_mailbox_name": "Exception/Error",
+    "subject": "apkscan.online ",
+    "client_connect": "smtp-mail.outlook.com",
+    "client_port": "587",
+    "client_authenticate_username": "exceptionreport@outlook.com",
+    "client_authenticate_password": "apkscan.online"
   }
 }

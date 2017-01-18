@@ -27,11 +27,11 @@ namespace main
         public static void Main(string[] args)
         {
             Console.WriteLine("STARTED VERSION: 32");
-            Config config = configuration("config.json");
+            //Config config = configuration("config.json");
 
-            androidVMavailable = new bool[config.android_vm.Count];
-            androidVMtimeWhenAvailable = new int[config.android_vm.Count];
-            for (int i = 0; i < config.android_vm.Count; i++)
+            androidVMavailable = new bool[config.AndroidVM.Count];
+            androidVMtimeWhenAvailable = new int[config.AndroidVM.Count];
+            for (int i = 0; i < config.AndroidVM.Count; i++)
             {
                 androidVMavailable[i] = true;
                 androidVMtimeWhenAvailable[i] = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
@@ -95,7 +95,7 @@ namespace main
                 {
                     if (!zauzet)
                     {
-                        if (brojReq >= config.android_vm.Count)
+                        if (brojReq >= config.AndroidVM.Count)
                         {
                             lock (lockObj)
                             {
@@ -140,8 +140,7 @@ namespace main
                                     if (androidVMavailable[vmPosition])
                                     {
                                         androidVMavailable[vmPosition] = false;
-                                        //connectToAllAndroidVM(); //after reset/snapshot master needs to ADB connect to all devices again                                           
-                                        currentVM = config.android_vm[vmPosition];
+                                        currentVM = config.AndroidVM[vmPosition].android_vm;
                                         Console.WriteLine(vmPosition + " is available " + currentVM);
                                         Console.WriteLine(vmPosition + " started processing apk in " + currentVM);
                                         ThreadStart starter = delegate { threadProcessAPK(db1, sub, data.hash, packageName, currentVM); };
@@ -208,8 +207,14 @@ namespace main
                 Console.WriteLine("processApkInVM ended");
             }
             */
-
-
+            //PROXMOX
+            /*
+            RedisProxmox resetRequest = new RedisProxmox();
+            resetRequest.task = eTask.rollbackSnapshot;
+            resetRequest.vm_id = "105";
+            resetRequest.auth = config.master.auth;
+            resetRequest.master_id = config.master.master_id;
+            */
             Console.WriteLine("pre stopwatch");
 
             Thread.Sleep(5000);
@@ -232,9 +237,9 @@ namespace main
         {
             //ADBLibrary.ADBClient.runADB("", "kill-server", false);
             ADBLibrary.ADBClient.runADB("", "start-server", false);
-            foreach (String ip in config.android_vm)
+            foreach (var vm in config.AndroidVM)
             {
-                ADBLibrary.ADBClient.connectToDevice(ip);
+                ADBLibrary.ADBClient.connectToDevice(vm.android_vm);
             }
         }
 
@@ -288,7 +293,7 @@ namespace main
             lock (lockObj)
             {
                 vmPosition++;
-                if (vmPosition == config.android_vm.Count)
+                if (vmPosition == config.AndroidVM.Count)
                 {
                     vmPosition = 0;
                 }
@@ -302,7 +307,7 @@ namespace main
                 Console.WriteLine("Broj obradjenih zahteva: " + brojObradjenih.ToString());
             }
             Console.WriteLine("br requesta nakon pozivanja processAPK " + brojReq);
-            if (brojReq < config.android_vm.Count)
+            if (brojReq < config.AndroidVM.Count)
             {
                 lock (lockObj)
                 {
