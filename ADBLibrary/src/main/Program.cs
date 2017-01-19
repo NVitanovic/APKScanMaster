@@ -26,7 +26,7 @@ namespace main
         public static int brojObradjenih = 0;//za testiranje
         public static void Main(string[] args)
         {
-            Console.WriteLine("STARTED VERSION: 33");
+            Console.WriteLine("STARTED VERSION: 38");
             //Config config = configuration("config.json");
 
             androidVMavailable = new bool[config.AndroidVM.Count];
@@ -47,7 +47,7 @@ namespace main
 
             try
             {
-                //connectToAllAndroidVM();
+                connectToAllAndroidVM();
             }
             catch (Exception e)
             {
@@ -80,14 +80,17 @@ namespace main
             //downloadFile("http://www.cdfgdfgdfgdfgdfgdfgdfgdgi.xyz/1/", "vpn.jpg", ".jpg", "TESTDL2");
             //downloadFile("http://www.cigani.xyz/1", "vpn.jpg", ".jpg", "TESTDL2");
 
-            Console.WriteLine("END MAIN");
-            Console.ReadLine();
+            //Console.WriteLine("END MAIN");
+            while (true)
+            {
+                Thread.Sleep(100);
+            }
         }
 
         public static void redisSubscribe(IDatabase db1, ISubscriber sub)
         {
             String packageName;
-            writeLineColored("\nthread redisSubscribe started", ConsoleColor.Magenta);
+            //writeLineColored("\nthread redisSubscribe started", ConsoleColor.Magenta);
 
             sub.Subscribe("send", (channel, message) =>
             {
@@ -101,7 +104,7 @@ namespace main
                             {
                                 zauzet = true;
                             }
-                            writeLineColored("Zauzeto.", ConsoleColor.Red);
+                            writeLineColored("Queue full. Waiting to some VM to become free.", ConsoleColor.Red);
                             continue;
                         }
                         string work = db1.ListRightPop("send");
@@ -113,14 +116,13 @@ namespace main
                                 brojReq++;
                             }
                             Console.WriteLine((string)work);
-                            Console.WriteLine("brojReq nakon pop je " + brojReq);
+                            Console.WriteLine("Files waiting to be processed: " + brojReq);
                             try
                             {
                                 data = JsonConvert.DeserializeObject<RedisSend>(work);
 
-                                //downloadFile(config.download_server, data.hash, ".apk" ,config.download_location);
-                                //packageName = ADBLibrary.ADBClient.getPackageNameFromApk(config.download_location + data.hash + ".apk");
-                                packageName = "com.google";
+                                downloadFile(config.download_server, data.hash, ".apk", config.download_location);
+                                packageName = ADBLibrary.ADBClient.getPackageNameFromApk(config.download_location + data.hash + ".apk");
                                 if (packageName == INVALID_APK)
                                 {
                                     Console.WriteLine("Invalid .apk");
@@ -132,17 +134,16 @@ namespace main
                                 }
                                 else
                                 {
-                                    Console.WriteLine("x");
                                     String currentVM;
 
                                     writeLineColored("\n==============================", ConsoleColor.DarkCyan);
-                                    Console.WriteLine("vmPosition=" + vmPosition);
+                                    //Console.WriteLine("vmPosition=" + vmPosition);
                                     if (androidVMavailable[vmPosition])
                                     {
                                         androidVMavailable[vmPosition] = false;
                                         currentVM = config.AndroidVM[vmPosition].android_vm;
-                                        Console.WriteLine(vmPosition + " is available " + currentVM);
-                                        Console.WriteLine(vmPosition + " started processing apk in " + currentVM);
+                                        //Console.WriteLine(vmPosition + " is available " + currentVM);
+                                        //Console.WriteLine(vmPosition + " started processing apk");
                                         ThreadStart starter = delegate { threadProcessAPK(db1, sub, data.hash, packageName, currentVM); };
                                         Thread processApk = new Thread(starter);
                                         processApk.Start();
@@ -167,9 +168,8 @@ namespace main
 
         private static void processApkInVM(IDatabase db1, ISubscriber sub, string hash, string packageName, string currentVM, int i)
         {
-            Console.WriteLine("processApkInVM started");
-            Console.WriteLine("currentVM: " + currentVM);
-            /*
+            Console.WriteLine("processApkInVM {0} started. hash: {1}", findVMid(currentVM), hash);
+            String currentVMipport = findVMid(currentVM);
             //connectToAllAndroidVM();
             ADBLibrary.ADBClient.clearLogcat(currentVM);
             if (ADBLibrary.ADBClient.installApk(currentVM, config.download_location + hash + ".apk"))
@@ -179,18 +179,10 @@ namespace main
 
                 for (int j = 0; j < results.Count; j++)
                 {
-                    Console.WriteLine("[" + config.android_vm_antivirus_app[j] + "] says that file is a virus " + results[config.android_vm_antivirus_keywords[j]]);
+                    Console.WriteLine("[" + config.android_vm_antivirus_app[j] + "] says that file + " + hash + " is a virus " + results[config.android_vm_antivirus_keywords[j]]);
                     result.av_results.Add(config.android_vm_antivirus_app[j], results[config.android_vm_antivirus_keywords[j]]);
                 }
-                //reset machine via proxmox api
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    //ADBLibrary.ADBClient.unInstallApk(currentVM, packageName);
-                    //ADBLibrary.ADBClient.runADB(currentVM, "reboot", false);
-                    ADBLibrary.ADBClient.runADB(currentVM, "disconnect " + currentVM, false);
-                    Console.WriteLine("Idi rucno vrati snapshot na masinu " + currentVM);
-                    Console.ResetColor();
-                //^ this is temporary
-                //////////////////////////////
+
                 result.master_id = "master1";
                 result.hash = data.hash;
                 result.upload_date = data.upload_date;
@@ -198,15 +190,12 @@ namespace main
                 result.filename = data.filename;
                 Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
                 Console.WriteLine(sub.Publish("receive", "x"));
-                Console.WriteLine("Returning to 'receive' redis queue:\n" + JsonConvert.SerializeObject(result));
+                Console.WriteLine("Returning to 'receive' redis queue:\n");
+                writeLineColored(JsonConvert.SerializeObject(result), ConsoleColor.Cyan);
+
                 File.Delete(config.download_location + data.hash + ".apk");
-            
-                Thread.Sleep(int.Parse(config.android_vm_wait_time_reboot) * 1000);
-                //ADBLibrary.ADBClient.connectToDevice(currentVM);
-                androidVMavailable[i] = true;
-                Console.WriteLine("processApkInVM ended");
             }
-            */
+
 
             //PROXMOX
             RedisProxmox resetRequest = new RedisProxmox();
@@ -215,19 +204,20 @@ namespace main
             resetRequest.auth = config.master.auth;
             resetRequest.master_id = config.master.master_id;
 
-            writeLineColored(config.proxmox_channel, ConsoleColor.Red);
             writeLineColored(JsonConvert.SerializeObject(resetRequest), ConsoleColor.Green);
 
-            ADBLibrary.ADBClient.runADB(currentVM, "disconnect", false);
+            writeLineColored("disconnecting from " + currentVM, ConsoleColor.Green);
+            ADBLibrary.ADBClient.disconnect(currentVM);
+            Thread.Sleep(1000);
 
             db1.ListLeftPush(config.proxmox_channel, JsonConvert.SerializeObject(resetRequest));
             sub.Publish(config.proxmox_channel, config.proxmox_channel);
 
-            Console.WriteLine("pre stopwatch");
+
             Thread.Sleep(Int32.Parse(config.android_vm_wait_time_reboot) * 1000);
-            Console.WriteLine("posle stopwatch");
-            Console.WriteLine("currentVM: " + currentVM);
-            Console.Write("Ended processing hash ");
+            Console.Write("Snapshot returned at ");
+            writeLineColored(currentVMipport, ConsoleColor.Red);
+            Console.Write("processApkInVM ended processing hash: ");
             writeLineColored(hash, ConsoleColor.Red);
 
             ADBLibrary.ADBClient.connectToDevice(currentVM);
@@ -260,7 +250,7 @@ namespace main
         public static void connectToAllAndroidVM()
         {
             //ADBLibrary.ADBClient.runADB("", "kill-server", false);
-            ADBLibrary.ADBClient.runADB("", "start-server", false);
+            //ADBLibrary.ADBClient.runADB("", "start-server", false);
             foreach (var vm in config.AndroidVM)
             {
                 ADBLibrary.ADBClient.connectToDevice(vm.android_vm);
@@ -270,7 +260,7 @@ namespace main
         public static bool downloadFile(String uri, String fileName, String fileExtension, String path)
         {
 
-            Console.WriteLine("downloadFile: started");
+            Console.WriteLine("downloadFile {0}: started", fileName);
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(uri);
             client.Timeout = TimeSpan.FromMinutes(5);
@@ -301,7 +291,7 @@ namespace main
             httpStream.Result.CopyTo(fileStream);
             fileStream.Flush();
             fileStream.Dispose();
-            Console.WriteLine("downloadFile: ended");
+            Console.WriteLine("downloadFile {0}: ended", fileName);
             return true;
         }
 
@@ -328,9 +318,9 @@ namespace main
                 brojReq--;
                 androidVMavailable[vmPosition] = true;
                 brojObradjenih++;
-                Console.WriteLine("Broj obradjenih zahteva: " + brojObradjenih.ToString());
+                Console.Write("APKs processed so far: ");
+                writeLineColored(brojObradjenih.ToString(), ConsoleColor.Cyan);
             }
-            Console.WriteLine("br requesta nakon pozivanja processAPK " + brojReq);
             if (brojReq < config.AndroidVM.Count)
             {
                 lock (lockObj)

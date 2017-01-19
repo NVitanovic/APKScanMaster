@@ -32,9 +32,9 @@
     "auth": "password1"
   },
   "proxmox_channel": "proxmoxapi",
-  "download_server": "http://www.cigani.xyz/1/",
+  "download_server": "http://download.apkscan.online/",
   "android_vm_wait_time_reboot": "15",
-  "logcat_wait": "5",
+  "logcat_wait": "45",
   "download_location": "/home/koma/koma/",
   "android_vm_antivirus_keywords": [
     "virus",

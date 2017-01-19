@@ -44,7 +44,7 @@ namespace ADBLibrary
             }
         }
 
-        public static void connectToDevice(String ip)   //TODO: add PORT, currently not using it
+        public static void connectToDevice(String ipport)
         {
             /*
             IPAddress tmp;
@@ -53,13 +53,13 @@ namespace ADBLibrary
             else
                 throw new Exception("Invalid ip address.");
             */
-            Process proc = runADB("", "connect " + ip, false);
+            Process proc = runADB(ipport, "connect", false);
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("connected", StringComparison.CurrentCultureIgnoreCase) == -1)
             {
-                Console.WriteLine("Can't connect to " + ip);
+                Console.WriteLine("Can't connect to " + ipport);
             }
-            Console.WriteLine("Connecting to " + ip + " result: " + result);
+            Console.WriteLine("Connecting to " + ipport + " result: " + result);
         }
 
         public static void clearLogcat(String ipport)
@@ -101,15 +101,40 @@ namespace ADBLibrary
             return results;
         }
 
+        public static void disconnect(String ipport)
+        {
+            runADB(ipport, "disconnect", false);
+        }
+
         public static Process runADB(String ipport, String args, bool killIfLogcat)
         {
             String arguments = "";
-            if (ipport != "")
+            //Console.WriteLine("ipport:{0} args:{1} arguments:{2}", ipport, args, arguments);
+
+            if (ipport == "")
             {
-                arguments = " -s " + ipport + " ";
+                arguments = args;
             }
-            arguments += args;
-            //Console.WriteLine("runADB arguments " + arguments);
+            else
+            {
+                if (args == "disconnect")
+                {
+                    arguments = "disconnect " + ipport;
+
+                }
+                else if (args == "connect")
+                {
+                    arguments = "connect " + ipport;
+                }
+                else
+                {
+                    arguments = "-s " + ipport + " " + args;
+                }
+            }
+            //Console.ForegroundColor = ConsoleColor.Red;
+            //Console.WriteLine("runADB arguments: " + arguments);
+            //Console.ResetColor();
+
             Process proc = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -137,7 +162,7 @@ namespace ADBLibrary
         {
             //Console.WriteLine("installing apk " + path);
             //Console.WriteLine("ipport " + ipport);
-            Process proc = runADB(ipport, " install " + path, false);
+            Process proc = runADB(ipport, "install " + path, false);
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)
             {
