@@ -2,12 +2,10 @@
 using System.Threading;
 using StackExchange.Redis;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Collections.Generic;
 using APKScanSharedClasses;
 using System.Net.Http;
-using System.Diagnostics;
 
 namespace main
 {
@@ -23,17 +21,19 @@ namespace main
         public static int brojReq = 0;
         public static List<string> queue;
         public static Object lockObj = new Object();
-        public static int brojObradjenih = 0;//za testiranje
+        public static int processedAPKs = 0;
         public static void Main(string[] args)
         {
-            Console.WriteLine("STARTED VERSION: 46");
+            Console.WriteLine("FINAL VERSION: ");
+            writeLineColored("1.0.3", ConsoleColor.Cyan);
+            Console.WriteLine("Publish date 21.1.2017.");
 
             androidVMavailable = new bool[config.AndroidVM.Count];
-            androidVMtimeWhenAvailable = new int[config.AndroidVM.Count];
+            //androidVMtimeWhenAvailable = new int[config.AndroidVM.Count];
             for (int i = 0; i < config.AndroidVM.Count; i++)
             {
                 androidVMavailable[i] = true;
-                androidVMtimeWhenAvailable[i] = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+                //androidVMtimeWhenAvailable[i] = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             }
 
             ADBLibrary.ADBClient.logcatTimeout = int.Parse(config.logcat_wait);
@@ -50,7 +50,7 @@ namespace main
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(DateTime.Now + ": " + e.StackTrace);
                 Thread tt = new Thread(() =>
                 {
                     EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
@@ -60,14 +60,20 @@ namespace main
 
             try
             {
-                ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect("192.168.4.201:7000,192.168.4.202:7000,192.168.4.203:7000");
+                String connectionString = "";
+                for (int i = 0; i < config.masters.Count; i++)
+                {
+                    connectionString += config.masters[i] + ",";
+                }
+                connectionString = connectionString.Substring(0, connectionString.Length - 1);
+                ConnectionMultiplexer redis1 = ConnectionMultiplexer.Connect(connectionString);
                 IDatabase db1 = redis1.GetDatabase();
                 ISubscriber sub = redis1.GetSubscriber();
                 redisSubscribe(db1, sub);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(DateTime.Now + ": " + e.StackTrace);
                 Thread tt = new Thread(() =>
                 {
                     EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
@@ -97,7 +103,7 @@ namespace main
                             {
                                 zauzet = true;
                             }
-                            writeLineColored("Queue full. Waiting to some VM to become free.", ConsoleColor.Red);
+                            writeLineColored("Queue full. Waiting for some VM to become free.", ConsoleColor.Red);
                             continue;
                         }
                         string work = db1.ListRightPop("send");
@@ -108,8 +114,8 @@ namespace main
                             {
                                 brojReq++;
                             }
-                            Console.WriteLine((string)work);
-                            Console.WriteLine("Files waiting to be processed: " + brojReq);
+                            Console.WriteLine(DateTime.Now + ": " + (string)work);
+                            Console.WriteLine(DateTime.Now + ": " + "Files waiting to be processed: " + brojReq);
                             try
                             {
                                 data = JsonConvert.DeserializeObject<RedisSend>(work);
@@ -151,7 +157,7 @@ namespace main
                             }
                             catch (Exception e)
                             {
-                                Console.WriteLine(e.StackTrace);
+                                Console.WriteLine(DateTime.Now + ": " + e.StackTrace);
                                 Thread t = new Thread(() =>
                                 {
                                     EmailNotify.SendEmail(config, "StackTrace:\n" + e.StackTrace + "\n\nData:\n" + e.Data + "\n\nMessage:\n" + e.Message + "\n\nSource:\n" + e.Source + "\n\nInnerException:\n" + e.InnerException);
@@ -166,7 +172,7 @@ namespace main
 
         private static void processApkInVM(IDatabase db1, ISubscriber sub, RedisSend data, string packageName, string currentVM, int i)
         {
-            Console.WriteLine("processApkInVM {0} started. file", findVMid(currentVM));
+            Console.WriteLine(DateTime.Now + ": " + "processApkInVM {0} started. file", findVMid(currentVM));
             writeLineColored(data.filename, ConsoleColor.Red);
             String currentVMipport = findVMid(currentVM);
 
@@ -181,7 +187,7 @@ namespace main
                 {
                     for (int j = 0; j < results.Count; j++)
                     {
-                        Console.WriteLine("[" + config.android_vm_antivirus_app[j] + "] says that file + " + data.hash + " is a virus " + results[config.android_vm_antivirus_keywords[j]]);
+                        Console.WriteLine(DateTime.Now + ": " + "[" + config.android_vm_antivirus_app[j] + "] says that file + " + data.filename + " is a virus " + results[config.android_vm_antivirus_keywords[j]]);
                         result.av_results.Add(config.android_vm_antivirus_app[j], results[config.android_vm_antivirus_keywords[j]]);
                     }
 
@@ -195,7 +201,7 @@ namespace main
                 }
                 Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
                 Console.WriteLine(sub.Publish("receive", "x"));
-                Console.WriteLine("Returning to 'receive' redis queue:\n");
+                Console.WriteLine(DateTime.Now + ": " + "Returning to 'receive' redis queue:\n");
                 writeLineColored(JsonConvert.SerializeObject(result), ConsoleColor.Cyan);
 
                 File.Delete(config.download_location + data.hash + ".apk");
@@ -223,7 +229,7 @@ namespace main
             Console.Write("Snapshot returned at ");
             writeLineColored(currentVMipport, ConsoleColor.Red);
             Console.Write("processApkInVM ended processing file: ");
-            writeLineColored(data.filename, ConsoleColor.Red);
+            writeLineColored(data.filename, ConsoleColor.Cyan);
 
             ADBLibrary.ADBClient.connectToDevice(currentVM);
         }
@@ -263,7 +269,7 @@ namespace main
         public static bool downloadFile(String uri, String fileName, String fileExtension, String path)
         {
 
-            Console.WriteLine("downloadFile {0}: started", fileName);
+            Console.WriteLine(DateTime.Now + ": " + "downloadFile {0}: started", fileName);
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(uri);
             client.Timeout = TimeSpan.FromMinutes(5);
@@ -294,7 +300,7 @@ namespace main
             httpStream.Result.CopyTo(fileStream);
             fileStream.Flush();
             fileStream.Dispose();
-            Console.WriteLine("downloadFile {0}: ended", fileName);
+            Console.WriteLine(DateTime.Now + ": " + "downloadFile {0}: ended", fileName);
             return true;
         }
 
@@ -320,9 +326,9 @@ namespace main
             {
                 brojReq--;
                 androidVMavailable[vmPosition] = true;
-                brojObradjenih++;
+                processedAPKs++;
                 Console.Write("APKs processed so far: ");
-                writeLineColored(brojObradjenih.ToString(), ConsoleColor.Cyan);
+                writeLineColored(processedAPKs.ToString(), ConsoleColor.Cyan);
             }
             if (brojReq < config.AndroidVM.Count)
             {
@@ -331,14 +337,14 @@ namespace main
                     zauzet = false;
                 }
             }
-            Console.WriteLine("***********************************\n\n");
+            Console.WriteLine(DateTime.Now + ": " + "***********************************\n\n");
         }
 
 
 
         private static void sendWhenInvalidApk(IDatabase db1, ISubscriber sub)
         {
-            Console.WriteLine("Invalid apk. Returning to 'receive' redis queue:\n");
+            Console.WriteLine(DateTime.Now + ": " + "Invalid apk. Returning to 'receive' redis queue:\n");
             RedisReceive result = new RedisReceive();
             Dictionary<String, String> results = new Dictionary<string, string>();
 
@@ -359,7 +365,6 @@ namespace main
             }
             Console.WriteLine(db1.ListLeftPush("receive", JsonConvert.SerializeObject(result), flags: CommandFlags.None));
             Console.WriteLine(sub.Publish("receive", "x"));
-            Console.WriteLine("Returning to 'receive' redis queue:\n");
         }
     }
 }

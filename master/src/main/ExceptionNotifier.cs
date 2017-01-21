@@ -40,7 +40,7 @@ namespace main
 
                     client.Send(message);
 
-                    Console.WriteLine("Email sent.");
+                    Console.WriteLine(DateTime.Now + ": "  + "Email sent.");
                     //TODO: treba da se proveri da li se mail stvarno poslao.
                     //event handler mora da se napravi http://www.mimekit.org/docs/html/E_MailKit_MailTransport_MessageSent.htm
                     client.Disconnect(true);
@@ -48,8 +48,8 @@ namespace main
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception while sending email");
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(DateTime.Now + ": "  + "Exception while sending email");
+                Console.WriteLine(DateTime.Now + ": "  + e.StackTrace);
             }
         }
     }

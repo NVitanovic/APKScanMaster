@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Diagnostics;
-using System.Net;
 
 namespace ADBLibrary
 {
@@ -50,9 +48,9 @@ namespace ADBLibrary
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("connected", StringComparison.CurrentCultureIgnoreCase) == -1)
             {
-                Console.WriteLine("Can't connect to " + ipport);
+                Console.WriteLine(DateTime.Now + ": " + "Can't connect to " + ipport);
             }
-            Console.WriteLine("Connecting to " + ipport + " result: " + result);
+            Console.WriteLine(DateTime.Now + ": " + "Connecting to " + ipport + " result: " + result);
         }
 
         public static void clearLogcat(String ipport)
@@ -147,25 +145,25 @@ namespace ADBLibrary
 
         public static bool installApk(String ipport, String path)
         {
-            Console.WriteLine("installing apk " + path);
+            Console.WriteLine(DateTime.Now + ": " + "installing apk " + path);
             Process proc = runADB(ipport, "install " + path, false);
             String result = proc.StandardOutput.ReadToEnd();
             if (result.IndexOf("Success", StringComparison.CurrentCultureIgnoreCase) != -1)
             {
                 if (result.IndexOf("Failure", StringComparison.CurrentCultureIgnoreCase) != -1)//just in case that file is success.apk
                 {
-                    Console.WriteLine("Failure while installing");
+                    Console.WriteLine(DateTime.Now + ": " + "Failure while installing");
                     return false;
                 }
                 else
                 {
-                    Console.WriteLine("Installed successfully");
+                    Console.WriteLine(DateTime.Now + ": " + "Installed successfully");
                     return true;
                 }
             }
             else
             {
-                Console.WriteLine("Failure while installing!!!");
+                Console.WriteLine(DateTime.Now + ": " + "Failure while installing!!!");
                 return false;
             }
         }
@@ -189,18 +187,21 @@ namespace ADBLibrary
             try
             {
                 proc.Start();
+                result = proc.StandardOutput.ReadToEnd();
+                //Console.WriteLine("package name from aapt: " + result);
                 if (result.Contains(' ') && !String.IsNullOrWhiteSpace(result))
                 {
                     String[] results = result.Split(' ');
                     result = results[1].Substring(6, results[1].Length - 7);
+                    Console.WriteLine(DateTime.Now + ": " + " package name of " + path + " is " + result);
                     return result;
                 }
                 return INVALID_APK;
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception: " + e);
-                Console.WriteLine(e.StackTrace);
+                Console.WriteLine(DateTime.Now + ": " + "Exception: " + e);
+                Console.WriteLine(DateTime.Now + ": " + e.StackTrace);
                 return INVALID_APK;
             }
         }
@@ -214,18 +215,18 @@ namespace ADBLibrary
             {
                 if (result.IndexOf("Failure", StringComparison.CurrentCultureIgnoreCase) != -1)
                 {
-                    Console.WriteLine("Failure while uninstalling");
+                    Console.WriteLine(DateTime.Now + ": " + "Failure while uninstalling");
                     return false;
                 }
                 else
                 {
-                    Console.WriteLine("Uninstalled successfully");
+                    Console.WriteLine(DateTime.Now + ": " + "Uninstalled successfully");
                     return true;
                 }
             }
             else
             {
-                Console.WriteLine("Failure while uninstalling!!!");
+                Console.WriteLine(DateTime.Now + ": " + "Failure while uninstalling!!!");
                 return false;
             }
         }
